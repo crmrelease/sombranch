@@ -469,22 +469,28 @@
     </div>
     <div class="filter-row">
       <div class="filter-label">면적 (평)</div>
-      <div class="chips" id="areaChips">
-        <button class="chip on" data-area="all">전체</button>
-        <button class="chip" data-area="0-10">10평 미만</button>
-        <button class="chip" data-area="10-20">10–20평</button>
-        <button class="chip" data-area="20-30">20–30평</button>
-        <button class="chip" data-area="30-40">30–40평</button>
-        <button class="chip" data-area="40-">40평 이상</button>
+      <div>
+        <div class="chips" id="areaChips">
+          <button class="chip on" data-area="all">전체</button>
+          <button class="chip" data-area="0-10">10평 미만</button>
+          <button class="chip" data-area="10-20">10–20평</button>
+          <button class="chip" data-area="20-30">20–30평</button>
+          <button class="chip" data-area="30-40">30–40평</button>
+          <button class="chip" data-area="40-">40평 이상</button>
+        </div>
+        <div class="field-sep" style="margin-top:6px; font-size:11.5px;">여러 구간 동시 선택 가능</div>
       </div>
     </div>
     <div class="filter-row">
       <div class="filter-label">층수</div>
-      <div class="chips" id="floorChips">
-        <button class="chip on" data-floor="all">전체</button>
-        <button class="chip" data-floor="low">저층 (1–5)</button>
-        <button class="chip" data-floor="mid">중층 (6–15)</button>
-        <button class="chip" data-floor="high">고층 (16+)</button>
+      <div>
+        <div class="chips" id="floorChips">
+          <button class="chip on" data-floor="all">전체</button>
+          <button class="chip" data-floor="low">저층 (1–5)</button>
+          <button class="chip" data-floor="mid">중층 (6–15)</button>
+          <button class="chip" data-floor="high">고층 (16+)</button>
+        </div>
+        <div class="field-sep" style="margin-top:6px; font-size:11.5px;">여러 구간 동시 선택 가능</div>
       </div>
     </div>
     <div class="filter-row">
@@ -580,7 +586,7 @@ const state = {
   selectedGus: new Set(),
   ymdFrom: '',
   ymdTo: '',
-  filters: { priceMin: null, priceMax: null, area: 'all', floor: 'all', apt: '' },
+  filters: { priceMin: null, priceMax: null, areas: new Set(), floors: new Set(), apt: '' },
   sort: 'date_desc',
   raw: [],
   filtered: [],
@@ -809,17 +815,25 @@ function applyFilters() {
     const max = (state.type === 'trade' ? +f.priceMax * 100_000_000 : +f.priceMax * 100_000_000);
     rows = rows.filter(r => (r.priceWon ?? 0) <= max);
   }
-  if (f.area && f.area !== 'all') {
-    const [lo, hi] = f.area.split('-').map(s => s === '' ? Infinity : +s);
-    rows = rows.filter(r => r.pyeong != null && r.pyeong >= lo && (hi === Infinity || r.pyeong < hi));
+  if (f.areas && f.areas.size > 0) {
+    const ranges = [...f.areas].map(a => {
+      const [lo, hi] = a.split('-').map(s => s === '' ? Infinity : +s);
+      return [lo, hi];
+    });
+    rows = rows.filter(r => {
+      if (r.pyeong == null) return false;
+      return ranges.some(([lo, hi]) => r.pyeong >= lo && (hi === Infinity || r.pyeong < hi));
+    });
   }
-  if (f.floor && f.floor !== 'all') {
+  if (f.floors && f.floors.size > 0) {
     rows = rows.filter(r => {
       const fl = r.floor || 0;
-      if (f.floor === 'low') return fl >= 1 && fl <= 5;
-      if (f.floor === 'mid') return fl >= 6 && fl <= 15;
-      if (f.floor === 'high') return fl >= 16;
-      return true;
+      for (const fb of f.floors) {
+        if (fb === 'low'  && fl >= 1  && fl <= 5)  return true;
+        if (fb === 'mid'  && fl >= 6  && fl <= 15) return true;
+        if (fb === 'high' && fl >= 16)             return true;
+      }
+      return false;
     });
   }
   if (f.apt && f.apt.trim()) {
@@ -956,19 +970,31 @@ function init() {
       applyFiltersAndRender();
     };
   });
+  function syncChipUI(wrapId, set, allKey) {
+    const wrap = $(wrapId);
+    wrap.querySelectorAll('.chip').forEach(c => {
+      const k = c.dataset[allKey === 'area' ? 'area' : 'floor'];
+      if (k === 'all') c.classList.toggle('on', set.size === 0);
+      else c.classList.toggle('on', set.has(k));
+    });
+  }
   $('areaChips').onclick = e => {
     if (!e.target.matches('.chip')) return;
-    $('areaChips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    e.target.classList.add('on');
-    state.filters.area = e.target.dataset.area;
+    const k = e.target.dataset.area;
+    if (k === 'all') state.filters.areas.clear();
+    else if (state.filters.areas.has(k)) state.filters.areas.delete(k);
+    else state.filters.areas.add(k);
+    syncChipUI('areaChips', state.filters.areas, 'area');
     state.page = 1;
     applyFiltersAndRender();
   };
   $('floorChips').onclick = e => {
     if (!e.target.matches('.chip')) return;
-    $('floorChips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    e.target.classList.add('on');
-    state.filters.floor = e.target.dataset.floor;
+    const k = e.target.dataset.floor;
+    if (k === 'all') state.filters.floors.clear();
+    else if (state.filters.floors.has(k)) state.filters.floors.delete(k);
+    else state.filters.floors.add(k);
+    syncChipUI('floorChips', state.filters.floors, 'floor');
     state.page = 1;
     applyFiltersAndRender();
   };
