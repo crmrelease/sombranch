@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부동산 모니터링 · 솜이 워크스페이스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdfbfc;
+    --surface: #ffffff;
+    --side-bg: #fff5f9;
+    --side-border: #fce4ee;
+    --text: #1f0f1a;
+    --text-2: #6b3a55;
+    --text-3: #a07585;
+    --border: #f4d8e4;
+    --border-2: #fbe9f1;
+    --accent: #db2777;
+    --accent-2: #ec4899;
+    --accent-soft: #fce7f3;
+    --accent-softer: #fdf2f8;
+    --hover: #fff0f6;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --success: #15803d;
+    --success-soft: #dcfce7;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --shadow-sm: 0 1px 2px rgba(31, 15, 26, 0.04), 0 1px 3px rgba(219, 39, 119, 0.06);
+    --shadow-md: 0 4px 16px -2px rgba(219, 39, 119, 0.10), 0 2px 6px rgba(31, 15, 26, 0.05);
+    --shadow-lg: 0 16px 40px -8px rgba(219, 39, 119, 0.18), 0 6px 16px rgba(31, 15, 26, 0.08);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    height: 100%;
+  }
+  body { display: flex; min-height: 100vh; }
+  aside {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--side-bg);
+    border-right: 1px solid var(--side-border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .brand {
+    padding: 8px 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .brand-mark {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.35);
+  }
+  .brand-text { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 11px; color: var(--text-3); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 1px; }
+  .nav-section { font-size: 10px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; padding: 14px 12px 6px; font-weight: 700; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 13.5px;
+    cursor: pointer;
+    border: none; background: transparent; width: 100%; text-align: left;
+    font-family: inherit;
+    transition: background 0.12s ease;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: white;
+    box-shadow: 0 6px 14px rgba(219, 39, 119, 0.28);
+  }
+  .nav-item .ico { font-size: 15px; width: 18px; text-align: center; }
+
+  main { flex: 1; padding: 28px 32px 64px; max-width: 1280px; min-width: 0; }
+  h1.page-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-bottom: 4px;
+  }
+  .page-sub { color: var(--text-3); font-size: 13px; margin-bottom: 24px; }
+
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .toggle-btn {
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: all 0.14s ease;
+    font-family: inherit;
+  }
+  .toggle-btn:hover { border-color: var(--accent-2); color: var(--accent); }
+  .toggle-btn.on {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.28);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 12px;
+  }
+
+  .filter-row { display: grid; grid-template-columns: 110px 1fr; gap: 14px 18px; align-items: start; }
+  .filter-row + .filter-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-2); }
+  .filter-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding-top: 7px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: var(--accent-2); color: var(--accent); background: var(--accent-softer); }
+  .chip.on {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 2px 6px rgba(219, 39, 119, 0.22);
+  }
+  .chip-mini { padding: 4px 9px; font-size: 11.5px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .field-sep { color: var(--text-3); font-size: 12px; }
+  input[type="text"], input[type="number"], input[type="month"], select {
+    padding: 8px 11px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    min-width: 0;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.14);
+  }
+  input[type="month"], input[type="number"] { width: 130px; }
+  .pill-input { width: 110px; }
+
+  .actionbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 14px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: all 0.14s ease;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover { border-color: var(--accent-2); color: var(--accent); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(219, 39, 119, 0.28);
+    padding: 11px 22px;
+    font-size: 13.5px;
+  }
+  .btn-primary:hover { color: white; transform: translateY(-1px); box-shadow: 0 10px 22px rgba(219, 39, 119, 0.36); }
+  .btn-primary:disabled, .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: var(--hover); }
+
+  .last-updated {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .last-updated strong { color: var(--text-2); font-weight: 600; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .dot.gray { background: var(--text-3); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat {
+    background: var(--accent-softer);
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-3); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; }
+  .stat-value { font-size: 18px; font-weight: 700; margin-top: 4px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    text-align: left;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border-2);
+    white-space: nowrap;
+  }
+  th {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--accent-softer);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--accent); }
+  th .arrow { display: inline-block; margin-left: 4px; color: var(--accent); }
+  td.num { font-family: 'JetBrains Mono', monospace; text-align: right; font-variant-numeric: tabular-nums; }
+  td.apt { font-weight: 600; color: var(--text); white-space: normal; max-width: 280px; }
+  td.muted { color: var(--text-3); }
+  tr:hover td { background: var(--hover); }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: auto;
+    max-height: 65vh;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .empty {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--text-3);
+  }
+  .empty .big { font-size: 36px; margin-bottom: 12px; }
+  .empty h3 { font-size: 15px; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
+  .empty p { font-size: 13px; max-width: 380px; margin: 0 auto; line-height: 1.6; }
+
+  .progress {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--accent-softer);
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+  .progress.on { display: flex; }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .progress-text { font-size: 12px; color: var(--text-2); display: flex; justify-content: space-between; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .pagination button:hover:not(:disabled) { border-color: var(--accent-2); color: var(--accent); }
+  .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pagination .page-info { font-variant-numeric: tabular-nums; padding: 0 6px; }
+
+  .note {
+    font-size: 12px;
+    color: var(--text-3);
+    line-height: 1.6;
+    padding: 10px 14px;
+    background: var(--accent-softer);
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 880px) {
+    aside { display: none; }
+    main { padding: 20px 16px 40px; }
+    .filter-row { grid-template-columns: 1fr; gap: 6px; }
+    .filter-label { padding-top: 0; }
+    .last-updated { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <a class="brand" href="../">
+    <div class="brand-mark">🏢</div>
+    <div>
+      <div class="brand-text">부동산 모니터링</div>
+      <div class="brand-sub">Realty</div>
+    </div>
+  </a>
+  <div class="nav-section">조회</div>
+  <button class="nav-item active" data-view="list"><span class="ico">📋</span> 실거래 목록</button>
+  <button class="nav-item" data-view="stats"><span class="ico">📊</span> 단지 통계</button>
+
+  <div class="nav-section" style="margin-top: 18px;">바로가기</div>
+  <a class="nav-item" href="../"><span class="ico">🏠</span> 메인으로</a>
+  <a class="nav-item" href="../wms/"><span class="ico">📦</span> WMS</a>
+  <a class="nav-item" href="../calc/"><span class="ico">🧮</span> 계산기</a>
+</aside>
+
+<main>
+  <h1 class="page-title">서울 아파트 실거래기록</h1>
+  <p class="page-sub">국토교통부 공공데이터 기반 · 갱신 버튼을 눌러야 최신 거래가 반영됩니다.</p>
+
+  <div class="toggle-row">
+    <button class="toggle-btn on" data-type="trade">매매</button>
+    <button class="toggle-btn" data-type="rent">전월세 (전세)</button>
+  </div>
+
+  <section class="card" id="filterCard">
+    <div class="card-title">조회 범위 (갱신 버튼 누를 때 적용)</div>
+    <div class="filter-row">
+      <div class="filter-label">자치구</div>
+      <div>
+        <div class="field-row" style="margin-bottom:6px;">
+          <button class="chip chip-mini" id="guAllBtn">전체</button>
+          <button class="chip chip-mini" id="guClearBtn">해제</button>
+          <span class="field-sep" id="guSummary">선택 안 됨</span>
+        </div>
+        <div class="chips" id="guChips"></div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">조회 거래월</div>
+      <div class="field-row">
+        <input type="month" id="ymdFrom"> <span class="field-sep">~</span> <input type="month" id="ymdTo">
+        <span class="field-sep" id="ymdSummary"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="actionbar">
+    <button class="btn btn-primary" id="refreshBtn">🔄 데이터 갱신</button>
+    <button class="btn btn-ghost" id="clearCacheBtn" title="저장된 데이터 비우기">🧹 캐시 비우기</button>
+    <span class="last-updated"><span class="dot gray" id="statusDot"></span> 마지막 갱신: <strong id="lastUpdated">없음</strong></span>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="progress-text">
+      <span id="progressText">진행 중...</span>
+      <span id="progressCount">0 / 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <section class="card">
+    <div class="card-title">결과 필터 · 정렬 (캐시된 데이터에서 즉시 적용)</div>
+    <div class="filter-row">
+      <div class="filter-label">가격대</div>
+      <div class="field-row">
+        <input type="number" id="priceMin" placeholder="최소" class="pill-input"> <span class="field-sep">~</span>
+        <input type="number" id="priceMax" placeholder="최대" class="pill-input">
+        <span class="field-sep" id="priceUnitLabel">(억)</span>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">면적 (평)</div>
+      <div class="chips" id="areaChips">
+        <button class="chip on" data-area="all">전체</button>
+        <button class="chip" data-area="0-10">10평 미만</button>
+        <button class="chip" data-area="10-20">10–20평</button>
+        <button class="chip" data-area="20-30">20–30평</button>
+        <button class="chip" data-area="30-40">30–40평</button>
+        <button class="chip" data-area="40-">40평 이상</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">층수</div>
+      <div class="chips" id="floorChips">
+        <button class="chip on" data-floor="all">전체</button>
+        <button class="chip" data-floor="low">저층 (1–5)</button>
+        <button class="chip" data-floor="mid">중층 (6–15)</button>
+        <button class="chip" data-floor="high">고층 (16+)</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">단지명</div>
+      <div class="field-row">
+        <input type="text" id="aptSearch" placeholder="단지명 일부 검색 (예: 래미안)" style="width:280px;">
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">정렬</div>
+      <div class="field-row">
+        <select id="sortKey">
+          <option value="date_desc">거래일 ↓ (최신)</option>
+          <option value="date_asc">거래일 ↑ (오래된)</option>
+          <option value="price_desc">가격 ↓ (높은)</option>
+          <option value="price_asc">가격 ↑ (낮은)</option>
+          <option value="ppyung_desc">평단가 ↓ (높은)</option>
+          <option value="ppyung_asc">평단가 ↑ (낮은)</option>
+          <option value="area_desc">면적 ↓ (큰)</option>
+          <option value="area_asc">면적 ↑ (작은)</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="table-wrap">
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th data-sort="date">거래일</th>
+          <th>자치구</th>
+          <th>단지명</th>
+          <th data-sort="area">전용면적 (평/㎡)</th>
+          <th data-sort="floor">층</th>
+          <th data-sort="price">거래금액</th>
+          <th data-sort="ppyung">평단가</th>
+          <th>건축년도</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="8"><div class="empty">
+          <div class="big">🏢</div>
+          <h3>아직 데이터가 없어</h3>
+          <p>위에서 자치구·거래월을 고른 다음 <strong>🔄 데이터 갱신</strong> 을 누르면 국토부에서 실거래 기록을 가져와.</p>
+        </div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" id="pagination" style="display:none;">
+    <button id="pgPrev">← 이전</button>
+    <span class="page-info"><strong id="pgCurrent">1</strong> / <span id="pgTotal">1</span></span>
+    <button id="pgNext">다음 →</button>
+  </div>
+
+  <p class="note" style="margin-top:16px;">
+    ⚠️ <strong>데이터 안내</strong>: 국토교통부 실거래가 공개 자료 기반이라 <em>현매물·향(direction)·매물 사진</em> 정보는 포함되지 않습니다. 매매·전세 실거래만 조회 가능. 거래월별로 데이터가 모이는 데 시일이 걸려 최근 1–2개월은 누락이 있을 수 있습니다.
+  </p>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SEOUL_GUS = [
+  {code:'11680', name:'강남구'}, {code:'11740', name:'강동구'}, {code:'11305', name:'강북구'},
+  {code:'11500', name:'강서구'}, {code:'11620', name:'관악구'}, {code:'11215', name:'광진구'},
+  {code:'11530', name:'구로구'}, {code:'11545', name:'금천구'}, {code:'11350', name:'노원구'},
+  {code:'11320', name:'도봉구'}, {code:'11230', name:'동대문구'}, {code:'11590', name:'동작구'},
+  {code:'11440', name:'마포구'}, {code:'11410', name:'서대문구'}, {code:'11650', name:'서초구'},
+  {code:'11200', name:'성동구'}, {code:'11290', name:'성북구'}, {code:'11710', name:'송파구'},
+  {code:'11470', name:'양천구'}, {code:'11560', name:'영등포구'}, {code:'11170', name:'용산구'},
+  {code:'11380', name:'은평구'}, {code:'11110', name:'종로구'}, {code:'11140', name:'중구'},
+  {code:'11260', name:'중랑구'},
+];
+
+const MOLIT_KEY = '95613bb414073a034336a35ab5c8535273259e3ce3d54ab373b0013ea20a3164';
+const ENDPOINTS = {
+  trade: 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade',
+  rent:  'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent',
+};
+const STORAGE_KEY = 'sombranch_realty_v1';
+const PAGE_SIZE = 50;
+
+const state = {
+  type: 'trade',
+  selectedGus: new Set(),
+  ymdFrom: '',
+  ymdTo: '',
+  filters: { priceMin: null, priceMax: null, area: 'all', floor: 'all', apt: '' },
+  sort: 'date_desc',
+  raw: [],
+  filtered: [],
+  page: 1,
+  lastUpdated: null,
+  loading: false,
+};
+
+function $(id) { return document.getElementById(id); }
+function fmt(n) { return n == null || isNaN(n) ? '-' : Number(n).toLocaleString('ko-KR'); }
+function fmtPrice(won) {
+  if (won == null || isNaN(won)) return '-';
+  if (won >= 100_000_000) {
+    const eok = Math.floor(won / 100_000_000);
+    const man = Math.floor((won % 100_000_000) / 10_000);
+    return man > 0 ? `${eok}억 ${fmt(man)}` : `${eok}억`;
+  }
+  return `${fmt(Math.floor(won/10000))}만`;
+}
+function fmtDate(y, m, d) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function toPyeong(m2) { return m2 ? +(m2 * 0.3025).toFixed(1) : null; }
+function toast(msg, isErr = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', isErr);
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function renderGuChips() {
+  const wrap = $('guChips');
+  wrap.innerHTML = '';
+  SEOUL_GUS.forEach(g => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (state.selectedGus.has(g.code) ? ' on' : '');
+    b.textContent = g.name;
+    b.dataset.code = g.code;
+    b.onclick = () => {
+      if (state.selectedGus.has(g.code)) state.selectedGus.delete(g.code);
+      else state.selectedGus.add(g.code);
+      renderGuChips();
+      updateGuSummary();
+    };
+    wrap.appendChild(b);
+  });
+  updateGuSummary();
+}
+function updateGuSummary() {
+  const n = state.selectedGus.size;
+  $('guSummary').textContent = n === 0 ? '선택 안 됨' : n === SEOUL_GUS.length ? '서울 전체 (25개)' : `${n}개 자치구 선택됨`;
+}
+
+function defaultMonths() {
+  const now = new Date();
+  const to = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const fromD = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  const from = `${fromD.getFullYear()}-${String(fromD.getMonth()+1).padStart(2,'0')}`;
+  return { from, to };
+}
+function listMonths(from, to) {
+  const [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  const out = [];
+  let y = fy, m = fm;
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(`${y}${String(m).padStart(2,'0')}`);
+    m++; if (m > 12) { m = 1; y++; }
+    if (out.length > 36) break;
+  }
+  return out;
+}
+
+async function fetchOne(type, lawdCd, dealYmd) {
+  const url = `${ENDPOINTS[type]}?serviceKey=${encodeURIComponent(MOLIT_KEY)}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}&numOfRows=1000&pageNo=1`;
+  const proxied = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  const res = await fetch(proxied);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  const xml = new DOMParser().parseFromString(text, 'text/xml');
+  const rc = xml.querySelector('resultCode')?.textContent || xml.querySelector('returnReasonCode')?.textContent;
+  if (rc && rc !== '00' && rc !== '0') {
+    const msg = xml.querySelector('resultMsg')?.textContent || xml.querySelector('returnAuthMsg')?.textContent || `code=${rc}`;
+    throw new Error(`API: ${msg}`);
+  }
+  const items = [...xml.querySelectorAll('item')];
+  return items.map(it => parseItem(it, type, lawdCd, dealYmd));
+}
+
+function pickText(item, ...names) {
+  for (const n of names) {
+    const el = [...item.children].find(c => c.tagName === n || c.tagName === n.toLowerCase());
+    if (el && el.textContent != null && el.textContent.trim() !== '') return el.textContent.trim();
+  }
+  return null;
+}
+function parseItem(item, type, lawdCd, dealYmd) {
+  const y = +(pickText(item, '년','dealYear','DealYear') || dealYmd.substring(0,4));
+  const m = +(pickText(item, '월','dealMonth','DealMonth') || dealYmd.substring(4,6));
+  const d = +(pickText(item, '일','dealDay','DealDay') || 1);
+  const apt = pickText(item, '아파트','aptNm') || '';
+  const dong = pickText(item, '법정동','umdNm') || '';
+  const area = parseFloat((pickText(item, '전용면적','excluUseAr') || '').replace(/,/g,''));
+  const floor = parseInt(pickText(item, '층','floor') || '0');
+  const buildYear = parseInt(pickText(item, '건축년도','buildYear') || '0');
+  const guName = SEOUL_GUS.find(g => g.code === lawdCd)?.name || '';
+  let priceWon = null, deposit = null, monthlyRent = null;
+  if (type === 'trade') {
+    const raw = pickText(item, '거래금액','dealAmount');
+    if (raw) priceWon = parseInt(raw.replace(/[,\s]/g,'')) * 10000;
+  } else {
+    const dRaw = pickText(item, '보증금액','deposit');
+    const mRaw = pickText(item, '월세금액','monthlyRent');
+    if (dRaw) deposit = parseInt(dRaw.replace(/[,\s]/g,'')) * 10000;
+    if (mRaw) monthlyRent = parseInt(mRaw.replace(/[,\s]/g,'')) * 10000;
+    priceWon = deposit;
+  }
+  const pyeong = toPyeong(area);
+  const ppyung = (priceWon && pyeong) ? Math.round(priceWon / pyeong) : null;
+  return {
+    type, y, m, d, dateKey: y*10000 + m*100 + d,
+    guName, dong, apt, area, pyeong, floor, buildYear,
+    priceWon, deposit, monthlyRent, ppyung,
+    isJeonse: type === 'rent' && (!monthlyRent || monthlyRent === 0),
+  };
+}
+
+async function refresh() {
+  if (state.loading) return;
+  if (state.selectedGus.size === 0) return toast('자치구를 1개 이상 선택해줘', true);
+  if (!state.ymdFrom || !state.ymdTo) return toast('조회 거래월을 골라줘', true);
+  if (state.ymdFrom > state.ymdTo) return toast('거래월 범위가 거꾸로야', true);
+
+  const months = listMonths(state.ymdFrom, state.ymdTo);
+  const gus = [...state.selectedGus];
+  const total = gus.length * months.length;
+  if (total > 75) return toast(`조회 단위가 너무 많아 (${total}회). 자치구나 기간을 줄여줘.`, true);
+
+  state.loading = true;
+  $('refreshBtn').disabled = true;
+  $('progress').classList.add('on');
+  $('progressText').textContent = `${state.type === 'trade' ? '매매' : '전월세'} 데이터 가져오는 중...`;
+
+  const collected = [];
+  let done = 0;
+  let errors = 0;
+  for (const lawdCd of gus) {
+    for (const ymd of months) {
+      try {
+        const rows = await fetchOne(state.type, lawdCd, ymd);
+        collected.push(...rows);
+      } catch (e) {
+        console.error(lawdCd, ymd, e);
+        errors++;
+      }
+      done++;
+      $('progressCount').textContent = `${done} / ${total}`;
+      $('progressFill').style.width = `${(done/total)*100}%`;
+    }
+  }
+
+  $('progress').classList.remove('on');
+  $('refreshBtn').disabled = false;
+  state.loading = false;
+
+  if (errors === total) {
+    toast(`전부 실패했어 (${errors}/${total}). API 키나 endpoint 확인 필요.`, true);
+    return;
+  }
+
+  if (state.type === 'rent') {
+    state.raw = collected.filter(r => r.isJeonse);
+  } else {
+    state.raw = collected;
+  }
+  state.lastUpdated = new Date().toISOString();
+  state.page = 1;
+  persist();
+  applyFiltersAndRender();
+  toast(`불러옴: ${state.raw.length}건${errors ? ` (${errors}건 실패)` : ''} 💕`);
+}
+
+function persist() {
+  const slim = state.raw.slice(0, 10000);
+  try {
+    localStorage.setItem(STORAGE_KEY + '_' + state.type, JSON.stringify({
+      raw: slim, lastUpdated: state.lastUpdated, ymdFrom: state.ymdFrom, ymdTo: state.ymdTo,
+      gus: [...state.selectedGus],
+    }));
+  } catch (e) { console.warn('localStorage save failed', e); }
+}
+function load() {
+  try {
+    const v = JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + state.type) || 'null');
+    if (v) {
+      state.raw = v.raw || [];
+      state.lastUpdated = v.lastUpdated || null;
+      if (v.ymdFrom) state.ymdFrom = v.ymdFrom;
+      if (v.ymdTo) state.ymdTo = v.ymdTo;
+      if (v.gus && state.selectedGus.size === 0) v.gus.forEach(g => state.selectedGus.add(g));
+    }
+  } catch {}
+}
+
+function applyFilters() {
+  const f = state.filters;
+  let rows = state.raw;
+  if (f.priceMin != null && f.priceMin !== '') {
+    const min = (state.type === 'trade' ? +f.priceMin * 100_000_000 : +f.priceMin * 100_000_000);
+    rows = rows.filter(r => (r.priceWon ?? 0) >= min);
+  }
+  if (f.priceMax != null && f.priceMax !== '') {
+    const max = (state.type === 'trade' ? +f.priceMax * 100_000_000 : +f.priceMax * 100_000_000);
+    rows = rows.filter(r => (r.priceWon ?? 0) <= max);
+  }
+  if (f.area && f.area !== 'all') {
+    const [lo, hi] = f.area.split('-').map(s => s === '' ? Infinity : +s);
+    rows = rows.filter(r => r.pyeong != null && r.pyeong >= lo && (hi === Infinity || r.pyeong < hi));
+  }
+  if (f.floor && f.floor !== 'all') {
+    rows = rows.filter(r => {
+      const fl = r.floor || 0;
+      if (f.floor === 'low') return fl >= 1 && fl <= 5;
+      if (f.floor === 'mid') return fl >= 6 && fl <= 15;
+      if (f.floor === 'high') return fl >= 16;
+      return true;
+    });
+  }
+  if (f.apt && f.apt.trim()) {
+    const q = f.apt.trim().toLowerCase();
+    rows = rows.filter(r => r.apt.toLowerCase().includes(q));
+  }
+  rows.sort((a,b) => {
+    switch (state.sort) {
+      case 'date_desc': return b.dateKey - a.dateKey;
+      case 'date_asc':  return a.dateKey - b.dateKey;
+      case 'price_desc':return (b.priceWon||0) - (a.priceWon||0);
+      case 'price_asc': return (a.priceWon||0) - (b.priceWon||0);
+      case 'ppyung_desc': return (b.ppyung||0) - (a.ppyung||0);
+      case 'ppyung_asc':  return (a.ppyung||0) - (b.ppyung||0);
+      case 'area_desc':   return (b.area||0) - (a.area||0);
+      case 'area_asc':    return (a.area||0) - (b.area||0);
+    }
+    return 0;
+  });
+  state.filtered = rows;
+}
+
+function renderStats() {
+  const wrap = $('stats');
+  if (state.filtered.length === 0) { wrap.innerHTML = ''; return; }
+  const prices = state.filtered.map(r => r.priceWon).filter(Boolean);
+  const ppyungs = state.filtered.map(r => r.ppyung).filter(Boolean);
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  const median = arr => {
+    if (!arr.length) return 0;
+    const s = [...arr].sort((a,b)=>a-b);
+    const mid = Math.floor(s.length/2);
+    return s.length % 2 ? s[mid] : (s[mid-1]+s[mid])/2;
+  };
+  wrap.innerHTML = `
+    <div class="stat"><div class="stat-label">건수</div><div class="stat-value">${fmt(state.filtered.length)}건</div></div>
+    <div class="stat"><div class="stat-label">평균 ${state.type==='trade'?'매매가':'전세가'}</div><div class="stat-value">${fmtPrice(avg(prices))}</div></div>
+    <div class="stat"><div class="stat-label">중간값</div><div class="stat-value">${fmtPrice(median(prices))}</div></div>
+    <div class="stat"><div class="stat-label">평균 평단가</div><div class="stat-value">${ppyungs.length? fmtPrice(avg(ppyungs)) : '-'}</div></div>
+  `;
+}
+
+function renderTable() {
+  const tb = $('tbody');
+  if (state.filtered.length === 0) {
+    tb.innerHTML = `<tr><td colspan="8"><div class="empty">
+      <div class="big">🔍</div>
+      <h3>조건에 맞는 결과가 없어</h3>
+      <p>${state.raw.length === 0 ? '먼저 데이터를 갱신해줘.' : '필터를 조금 풀어봐.'}</p>
+    </div></td></tr>`;
+    $('pagination').style.display = 'none';
+    return;
+  }
+  const start = (state.page - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, state.filtered.length);
+  const slice = state.filtered.slice(start, end);
+  tb.innerHTML = slice.map(r => `
+    <tr>
+      <td class="muted">${fmtDate(r.y, r.m, r.d)}</td>
+      <td>${r.guName}<span class="muted"> · ${r.dong}</span></td>
+      <td class="apt">${escapeHtml(r.apt)}</td>
+      <td class="num">${r.pyeong != null ? r.pyeong : '-'} <span class="muted">/ ${r.area || '-'}</span></td>
+      <td class="num">${r.floor || '-'}</td>
+      <td class="num">${state.type === 'rent' && r.monthlyRent ? fmtPrice(r.priceWon) + '<span class="muted"> + 월 ' + fmtPrice(r.monthlyRent) + '</span>' : fmtPrice(r.priceWon)}</td>
+      <td class="num">${r.ppyung ? fmtPrice(r.ppyung) : '-'}</td>
+      <td class="num muted">${r.buildYear || '-'}</td>
+    </tr>
+  `).join('');
+  const totalPages = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
+  $('pagination').style.display = totalPages > 1 ? 'flex' : 'none';
+  $('pgCurrent').textContent = state.page;
+  $('pgTotal').textContent = totalPages;
+  $('pgPrev').disabled = state.page <= 1;
+  $('pgNext').disabled = state.page >= totalPages;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function applyFiltersAndRender() {
+  applyFilters();
+  renderStats();
+  renderTable();
+  renderLastUpdated();
+}
+
+function renderLastUpdated() {
+  const el = $('lastUpdated');
+  const dot = $('statusDot');
+  if (!state.lastUpdated) { el.textContent = '없음'; dot.classList.add('gray'); return; }
+  const d = new Date(state.lastUpdated);
+  const pad = n => String(n).padStart(2,'0');
+  el.textContent = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} (${state.raw.length}건)`;
+  dot.classList.remove('gray');
+}
+
+function init() {
+  const def = defaultMonths();
+  state.ymdFrom = def.from;
+  state.ymdTo = def.to;
+  load();
+  $('ymdFrom').value = state.ymdFrom;
+  $('ymdTo').value = state.ymdTo;
+  renderGuChips();
+
+  document.querySelectorAll('.toggle-btn').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.toggle-btn').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state.type = b.dataset.type;
+      $('priceUnitLabel').textContent = state.type === 'trade' ? '(억 — 매매가)' : '(억 — 보증금)';
+      state.raw = []; state.filtered = []; state.lastUpdated = null;
+      load();
+      applyFiltersAndRender();
+    };
+  });
+
+  $('guAllBtn').onclick = () => { SEOUL_GUS.forEach(g => state.selectedGus.add(g.code)); renderGuChips(); };
+  $('guClearBtn').onclick = () => { state.selectedGus.clear(); renderGuChips(); };
+  $('ymdFrom').onchange = e => state.ymdFrom = e.target.value;
+  $('ymdTo').onchange = e => state.ymdTo = e.target.value;
+  $('refreshBtn').onclick = refresh;
+  $('clearCacheBtn').onclick = () => {
+    if (!confirm('현재 탭의 캐시된 데이터를 모두 지워?')) return;
+    localStorage.removeItem(STORAGE_KEY + '_' + state.type);
+    state.raw = []; state.filtered = []; state.lastUpdated = null;
+    applyFiltersAndRender();
+    toast('캐시 비웠어 💕');
+  };
+
+  ['priceMin','priceMax','aptSearch'].forEach(id => {
+    $(id).oninput = e => {
+      const k = id === 'aptSearch' ? 'apt' : id === 'priceMin' ? 'priceMin' : 'priceMax';
+      state.filters[k] = e.target.value;
+      state.page = 1;
+      applyFiltersAndRender();
+    };
+  });
+  $('areaChips').onclick = e => {
+    if (!e.target.matches('.chip')) return;
+    $('areaChips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    e.target.classList.add('on');
+    state.filters.area = e.target.dataset.area;
+    state.page = 1;
+    applyFiltersAndRender();
+  };
+  $('floorChips').onclick = e => {
+    if (!e.target.matches('.chip')) return;
+    $('floorChips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    e.target.classList.add('on');
+    state.filters.floor = e.target.dataset.floor;
+    state.page = 1;
+    applyFiltersAndRender();
+  };
+  $('sortKey').onchange = e => { state.sort = e.target.value; state.page = 1; applyFiltersAndRender(); };
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.sort;
+      const map = { date:'date_desc', price:'price_desc', ppyung:'ppyung_desc', area:'area_desc', floor:null };
+      const cur = state.sort;
+      if (k === 'floor') return;
+      const desc = `${k}_desc`, asc = `${k}_asc`;
+      state.sort = cur === desc ? asc : desc;
+      $('sortKey').value = state.sort;
+      applyFiltersAndRender();
+    };
+  });
+  $('pgPrev').onclick = () => { state.page--; renderTable(); window.scrollTo({top: $('resultTable').offsetTop - 100, behavior: 'smooth'}); };
+  $('pgNext').onclick = () => { state.page++; renderTable(); window.scrollTo({top: $('resultTable').offsetTop - 100, behavior: 'smooth'}); };
+
+  applyFiltersAndRender();
+}
+init();
+</script>
+</body>
+</html>
