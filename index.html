@@ -3,293 +3,1006 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bunny Gallery</title>
+<title>WMS · 솜이 창고</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #fdfbfc;
+    --surface: #ffffff;
+    --side-bg: #fff5f9;
+    --side-border: #fce4ee;
+    --text: #1f0f1a;
+    --text-2: #6b3a55;
+    --text-3: #a07585;
+    --border: #f4d8e4;
+    --border-2: #fbe9f1;
+    --accent: #db2777;
+    --accent-2: #ec4899;
+    --accent-soft: #fce7f3;
+    --accent-softer: #fdf2f8;
+    --hover: #fff0f6;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --success: #15803d;
+    --success-soft: #dcfce7;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --shadow-sm: 0 1px 2px rgba(31, 15, 26, 0.04), 0 1px 3px rgba(219, 39, 119, 0.06);
+    --shadow-md: 0 4px 16px -2px rgba(219, 39, 119, 0.10), 0 2px 6px rgba(31, 15, 26, 0.05);
+    --shadow-lg: 0 16px 40px -8px rgba(219, 39, 119, 0.18), 0 6px 16px rgba(31, 15, 26, 0.08);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    height: 100%;
+  }
+
   body {
+    display: flex;
     min-height: 100vh;
+  }
+
+  /* Sidebar */
+  aside {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--side-bg);
+    border-right: 1px solid var(--side-border);
+    padding: 24px 16px;
     display: flex;
     flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    padding: 8px 12px 24px;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    font-family: 'Inter', system-ui, sans-serif;
-    color: #f4f4f6;
-    background:
-      radial-gradient(circle at 20% 20%, #831843 0%, transparent 45%),
-      radial-gradient(circle at 80% 80%, #4c1d95 0%, transparent 45%),
-      linear-gradient(135deg, #0f0f1e, #1a1a2e);
-    background-attachment: fixed;
-    padding: 40px 20px;
+    gap: 10px;
   }
-
-  h1 {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 6px;
-    background: linear-gradient(135deg, #fbcfe8, #c4b5fd);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .subtitle {
-    font-size: 14px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 32px;
-    letter-spacing: 0.02em;
-  }
-
-  .stage {
-    position: relative;
-    width: min(820px, 100%);
-    aspect-ratio: 4 / 3;
-    border-radius: 28px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow:
-      0 30px 80px -20px rgba(0,0,0,0.5),
-      0 0 0 1px rgba(255,255,255,0.02) inset;
-    backdrop-filter: blur(20px);
-  }
-
-  .slides {
-    position: absolute;
-    inset: 0;
-  }
-
-  .slide {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transform: scale(1.05);
-    transition: opacity 600ms ease, transform 800ms ease;
-    pointer-events: none;
-  }
-
-  .slide.active {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .slide.loading::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .gradient-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.4) 100%);
-    pointer-events: none;
-  }
-
-  .nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: rgba(15,15,30,0.55);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
-    cursor: pointer;
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    transition: all 200ms ease;
-    z-index: 5;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.35);
+  }
+  .brand-text {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 1px;
   }
 
-  .nav:hover {
-    background: rgba(139,92,246,0.45);
-    border-color: rgba(255,255,255,0.25);
-    transform: translateY(-50%) scale(1.08);
+  .nav-section {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 16px 12px 6px;
   }
 
-  .nav:active {
-    transform: translateY(-50%) scale(0.95);
-  }
-
-  .nav.prev { left: 16px; }
-  .nav.next { right: 16px; }
-
-  .counter {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-    font-size: 13px;
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-2);
     font-weight: 500;
-    color: rgba(255,255,255,0.85);
-    background: rgba(15,15,30,0.55);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.12);
-    padding: 6px 12px;
-    border-radius: 999px;
-    z-index: 5;
-    letter-spacing: 0.05em;
+    transition: all 150ms ease;
+    user-select: none;
+    border: none;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .nav-item:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+  .nav-item.active {
+    background: white;
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-item .ico {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
-  .dots {
+  /* Main */
+  main {
+    flex: 1;
+    min-width: 0;
+    padding: 32px 40px 60px;
+    max-width: 1280px;
+  }
+
+  header.page {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header.page h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  header.page .desc {
+    color: var(--text-3);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  header.page .actions {
     display: flex;
     gap: 8px;
-    margin-top: 24px;
   }
 
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    border: none;
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-weight: 500;
+    font-size: 13px;
+    font-family: inherit;
     cursor: pointer;
-    padding: 0;
-    transition: all 250ms ease;
+    transition: all 150ms ease;
+    line-height: 1.2;
   }
-
-  .dot.active {
-    width: 28px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #ec4899, #a855f7);
+  .btn:hover {
+    background: var(--hover);
+    border-color: var(--accent-soft);
   }
-
-  .dot:hover:not(.active) {
-    background: rgba(255,255,255,0.4);
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 6px rgba(219, 39, 119, 0.25);
   }
-
-  .hint {
-    margin-top: 18px;
+  .btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4);
+    background: linear-gradient(135deg, #f472b6, #db2777);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .btn-danger {
+    color: var(--danger);
+    border-color: var(--danger-soft);
+  }
+  .btn-danger:hover {
+    background: var(--danger-soft);
+  }
+  .btn-ghost {
+    border-color: transparent;
+  }
+  .btn-sm {
+    padding: 5px 10px;
     font-size: 12px;
-    color: rgba(255,255,255,0.35);
-    letter-spacing: 0.05em;
+    border-radius: 6px;
   }
 
-  kbd {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
-    padding: 1px 6px;
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card + .card {
+    margin-top: 16px;
+  }
+  .card-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-head h2 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .card-body {
+    padding: 20px;
+  }
+  .card-body.tight {
+    padding: 0;
+  }
+
+  /* Form */
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+  input, select, textarea {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    width: 100%;
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="number"] {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-2);
+    background: var(--accent-softer);
+    padding: 10px 16px;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid var(--border-2);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-2);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr {
+    transition: background 100ms;
+  }
+  tbody tr:hover { background: var(--accent-softer); }
+  tbody tr.clickable { cursor: pointer; }
+  td.num, th.num {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Item rows (inbound/outbound editor) */
+  .item-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .item-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 40px;
+    gap: 10px;
+    align-items: end;
+  }
+  .item-row.header {
+    align-items: end;
+  }
+  .item-row.header label {
+    margin-bottom: 6px;
+  }
+  .item-row .remove {
+    height: 36px;
+    width: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 120ms;
+    align-self: flex-end;
+    margin-bottom: 0;
+    font-size: 16px;
+  }
+  .item-row .remove:hover:not(:disabled) {
+    border-color: var(--danger-soft);
+    color: var(--danger);
+    background: var(--danger-soft);
+  }
+  .item-row .remove:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .add-link {
+    align-self: flex-start;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    margin-top: 4px;
+  }
+  .add-link:hover { text-decoration: underline; }
+
+  .summary-bar {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--accent-softer);
+    border: 1px solid var(--accent-soft);
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .summary-bar .total {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* Stat tiles for inventory */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .stat .label {
+    font-size: 12px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .stat .value {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.01em;
+  }
+  .stat .accent { color: var(--accent); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
     font-size: 11px;
-    font-family: ui-monospace, monospace;
-    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .badge.zero { background: #f3f4f6; color: #6b7280; }
+  .badge.low { background: var(--warn-soft); color: var(--warn); }
+  .badge.in { background: var(--success-soft); color: var(--success); }
+
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-3);
+  }
+  .empty .ico { font-size: 28px; margin-bottom: 8px; opacity: 0.6; }
+  .empty .title { font-size: 14px; font-weight: 500; color: var(--text-2); }
+  .empty .hint { font-size: 12px; margin-top: 4px; }
+
+  /* Detail breadcrumb */
+  .crumb {
+    color: var(--text-3);
+    font-size: 13px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    font-family: inherit;
+  }
+  .crumb:hover { color: var(--accent); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 200ms ease;
+    pointer-events: none;
+    z-index: 100;
+    max-width: 360px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: var(--danger); }
+  .toast.success { background: var(--success); }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 15, 26, 0.45);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 14px;
+    width: min(440px, 92vw);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .modal-head { padding: 18px 20px 6px; }
+  .modal-head h3 { font-size: 15px; font-weight: 600; }
+  .modal-body { padding: 8px 20px 20px; color: var(--text-2); font-size: 13px; }
+  .modal-foot { padding: 12px 20px; background: var(--accent-softer); display: flex; justify-content: flex-end; gap: 8px; }
+
+  .voucher-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 500;
   }
 
-  @media (max-width: 600px) {
-    h1 { font-size: 22px; }
-    .nav { width: 44px; height: 44px; font-size: 18px; }
-    .nav.prev { left: 10px; }
-    .nav.next { right: 10px; }
+  .muted { color: var(--text-3); }
+  .right { text-align: right; }
+  .gap-md { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  @media (max-width: 760px) {
+    body { flex-direction: column; }
+    aside { width: 100%; height: auto; position: relative; padding: 16px; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .brand { width: 100%; padding: 4px 8px 12px; }
+    .nav-section { display: none; }
+    .nav-item { flex: 1 1 auto; min-width: 100px; padding: 8px 10px; font-size: 13px; }
+    main { padding: 20px; }
+    .item-row { grid-template-columns: 1fr 100px 36px; }
   }
 </style>
 </head>
 <body>
-  <h1>🐰 Bunny Gallery</h1>
-  <p class="subtitle">10 cute rabbits · use arrows or ← →</p>
 
-  <div class="stage" role="region" aria-label="Rabbit slideshow">
-    <div class="slides" id="slides"></div>
-    <div class="gradient-overlay"></div>
-    <div class="counter" id="counter">1 / 10</div>
-    <button class="nav prev" id="prev" aria-label="Previous">‹</button>
-    <button class="nav next" id="next" aria-label="Next">›</button>
+<aside>
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div>
+      <div class="brand-text">솜이 창고</div>
+      <div class="brand-sub">WMS</div>
+    </div>
   </div>
 
-  <div class="dots" id="dots"></div>
-  <p class="hint">click <kbd>‹</kbd> <kbd>›</kbd> or press <kbd>←</kbd> <kbd>→</kbd></p>
+  <div class="nav-section">Operations</div>
+  <button class="nav-item" data-route="inbound"><span class="ico">↓</span><span>입고관리</span></button>
+  <button class="nav-item" data-route="outbound"><span class="ico">↑</span><span>출고관리</span></button>
+  <button class="nav-item" data-route="inventory"><span class="ico">▦</span><span>재고관리</span></button>
+
+  <div class="nav-section">Records</div>
+  <button class="nav-item" data-route="inboundList"><span class="ico">▤</span><span>입고전표조회</span></button>
+  <button class="nav-item" data-route="outboundList"><span class="ico">▤</span><span>출고전표조회</span></button>
+</aside>
+
+<main id="main"></main>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">확인</h3></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" id="modalCancel">취소</button>
+      <button class="btn btn-sm btn-primary" id="modalOk">확인</button>
+    </div>
+  </div>
+</div>
 
 <script>
-  const PHOTOS = [
-    '1585110396000-c9ffd4e4b308',
-    '1609151354448-c4a53450c6e9',
-    '1535241749838-299277b6305f',
-    '1480554840075-72cbdabbf689',
-    '1452857297128-d9c29adba80b',
-    '1589952283406-b53a7d1347e8',
-    '1581872454565-822dac9367aa',
-    '1623686070581-5d2eb8187fc2',
-    '1591561582301-7ce6588cc286',
-    '1559214369-a6b1d7919865',
-  ];
+'use strict';
 
-  const slidesEl = document.getElementById('slides');
-  const dotsEl = document.getElementById('dots');
-  const counterEl = document.getElementById('counter');
-  const prevBtn = document.getElementById('prev');
-  const nextBtn = document.getElementById('next');
+// ---------- Storage ----------
+const STORAGE_KEY = 'wms_state_v1';
 
-  let current = 0;
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { return JSON.parse(raw); } catch (e) {}
+  }
+  return seed();
+}
 
-  PHOTOS.forEach((id, i) => {
-    const slide = document.createElement('div');
-    slide.className = 'slide loading';
-    const url = `https://images.unsplash.com/photo-${id}?w=1200&q=80&auto=format&fit=crop`;
-    const img = new Image();
-    img.onload = () => {
-      slide.style.backgroundImage = `url('${url}')`;
-      slide.classList.remove('loading');
-    };
-    img.onerror = () => slide.classList.remove('loading');
-    img.src = url;
-    slidesEl.appendChild(slide);
+function seed() {
+  return {
+    products: [
+      { id: 'p1', name: '토끼인형',   stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p2', name: '다람쥐잠옷', stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p3', name: '아이맥',     stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p4', name: '눈알사탕',   stock: 0, lastInbound: null, lastOutbound: null },
+    ],
+    inboundVouchers: [],
+    outboundVouchers: [],
+    counters: { inbound: 0, outbound: 0 },
+  };
+}
 
-    const dot = document.createElement('button');
-    dot.className = 'dot';
-    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
-    dot.addEventListener('click', () => go(i));
-    dotsEl.appendChild(dot);
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+
+// ---------- Helpers ----------
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const fmtNum = (n) => Number(n).toLocaleString('ko-KR');
+const productMap = () => Object.fromEntries(state.products.map(p => [p.id, p]));
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function nextVoucherId(kind) {
+  state.counters[kind] += 1;
+  const seq = String(state.counters[kind]).padStart(4, '0');
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth()+1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${kind === 'inbound' ? 'IN' : 'OUT'}-${yy}${mm}${dd}-${seq}`;
+}
+
+// ---------- Toast / Modal ----------
+let toastTimer;
+function toast(msg, type = '') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 2400);
+}
+
+function confirmModal({ title, body, okText = '확인', okClass = 'btn-primary' }) {
+  return new Promise((resolve) => {
+    $('#modalTitle').textContent = title;
+    $('#modalBody').textContent = body;
+    const ok = $('#modalOk');
+    ok.textContent = okText;
+    ok.className = 'btn btn-sm ' + okClass;
+    $('#modalBg').classList.add('show');
+    function done(v) {
+      $('#modalBg').classList.remove('show');
+      ok.removeEventListener('click', okH);
+      $('#modalCancel').removeEventListener('click', cancelH);
+      resolve(v);
+    }
+    function okH() { done(true); }
+    function cancelH() { done(false); }
+    ok.addEventListener('click', okH);
+    $('#modalCancel').addEventListener('click', cancelH);
   });
+}
 
-  function render() {
-    [...slidesEl.children].forEach((s, i) => s.classList.toggle('active', i === current));
-    [...dotsEl.children].forEach((d, i) => d.classList.toggle('active', i === current));
-    counterEl.textContent = `${current + 1} / ${PHOTOS.length}`;
+// ---------- Router ----------
+const routes = {
+  inbound:      { title: '입고관리',     desc: '상품을 추가하고 입고수량을 입력해 입고전표를 생성합니다.', render: renderInbound },
+  outbound:     { title: '출고관리',     desc: '상품을 선택하고 출고수량을 입력해 출고전표를 생성합니다.', render: renderOutbound },
+  inventory:    { title: '재고관리',     desc: '상품별 현재 재고와 최근 입출고 일자를 확인합니다.', render: renderInventory },
+  inboundList:  { title: '입고전표조회', desc: '입고 전표를 클릭하면 상세 항목을 볼 수 있습니다.', render: () => renderVoucherList('inbound') },
+  outboundList: { title: '출고전표조회', desc: '출고 전표를 클릭하면 상세 항목을 볼 수 있습니다.', render: () => renderVoucherList('outbound') },
+};
+let currentRoute = 'inbound';
+let detailVoucher = null;
+
+function navigate(name) {
+  currentRoute = name;
+  detailVoucher = null;
+  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.route === name));
+  const r = routes[name];
+  const main = $('#main');
+  main.innerHTML = `
+    <header class="page">
+      <div>
+        <h1>${r.title}</h1>
+        <div class="desc">${r.desc}</div>
+      </div>
+      <div class="actions" id="pageActions"></div>
+    </header>
+    <div id="view"></div>
+  `;
+  r.render();
+}
+
+// ---------- Views ----------
+
+// Inbound editor
+function renderInbound() { renderEditor('inbound'); }
+function renderOutbound() { renderEditor('outbound'); }
+
+function renderEditor(kind) {
+  const isIn = kind === 'inbound';
+  const view = $('#view');
+  view.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h2>${isIn ? '입고 상품 등록' : '출고 상품 등록'}</h2>
+        <span class="muted" style="font-size:12px">한 번에 여러 상품을 처리할 수 있어요</span>
+      </div>
+      <div class="card-body">
+        <div class="item-rows" id="rows"></div>
+        <button class="add-link" id="addRow">＋ 상품 추가</button>
+        <div class="summary-bar">
+          <div class="muted">총 항목 <span id="sumCount" class="total">0</span> · 총 수량 <span id="sumQty" class="total">0</span></div>
+          <button class="btn btn-primary" id="submit">${isIn ? '입고완료' : '출고완료'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const rowsEl = $('#rows');
+  let rowSeq = 0;
+  function addRow() {
+    rowSeq += 1;
+    const id = `r${rowSeq}`;
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.dataset.id = id;
+    const opts = state.products
+      .map(p => `<option value="${p.id}">${p.name}${kind === 'outbound' ? ` (재고 ${p.stock})` : ''}</option>`)
+      .join('');
+    div.innerHTML = `
+      <div>
+        <label>상품</label>
+        <select class="prod">${opts}</select>
+      </div>
+      <div>
+        <label>수량</label>
+        <input class="qty" type="number" min="1" step="1" placeholder="0" />
+      </div>
+      <button class="remove" title="삭제">×</button>
+    `;
+    rowsEl.appendChild(div);
+    div.querySelector('.qty').addEventListener('input', updateSummary);
+    div.querySelector('.remove').addEventListener('click', () => {
+      if (rowsEl.children.length === 1) { toast('최소 1개 행이 필요해요'); return; }
+      div.remove();
+      updateSummary();
+    });
+    updateSummary();
+  }
+  function readRows() {
+    return $$('.item-row', rowsEl).map(r => ({
+      productId: r.querySelector('.prod').value,
+      qty: parseInt(r.querySelector('.qty').value, 10) || 0,
+    }));
+  }
+  function updateSummary() {
+    const rows = readRows();
+    const validRows = rows.filter(r => r.qty > 0);
+    $('#sumCount').textContent = validRows.length;
+    $('#sumQty').textContent = fmtNum(validRows.reduce((s, r) => s + r.qty, 0));
   }
 
-  function go(i) {
-    current = (i + PHOTOS.length) % PHOTOS.length;
-    render();
+  $('#addRow').addEventListener('click', addRow);
+  addRow();
+
+  $('#submit').addEventListener('click', () => submitVoucher(kind, readRows()));
+}
+
+async function submitVoucher(kind, rows) {
+  const items = rows.filter(r => r.qty > 0);
+  if (items.length === 0) {
+    toast('수량이 입력된 항목이 없어요', 'error');
+    return;
   }
 
-  prevBtn.addEventListener('click', () => go(current - 1));
-  nextBtn.addEventListener('click', () => go(current + 1));
+  // Merge duplicates per productId
+  const merged = {};
+  for (const it of items) {
+    merged[it.productId] = (merged[it.productId] || 0) + it.qty;
+  }
+  const finalItems = Object.entries(merged).map(([productId, qty]) => ({ productId, qty }));
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') go(current - 1);
-    if (e.key === 'ArrowRight') go(current + 1);
+  // Outbound: validate stock
+  if (kind === 'outbound') {
+    const map = productMap();
+    for (const it of finalItems) {
+      const p = map[it.productId];
+      if (it.qty > p.stock) {
+        toast(`${p.name} 재고 부족 (현재 ${p.stock}개, 출고요청 ${it.qty}개)`, 'error');
+        return;
+      }
+    }
+  }
+
+  const totalQty = finalItems.reduce((s, r) => s + r.qty, 0);
+  const ok = await confirmModal({
+    title: kind === 'inbound' ? '입고 처리하시겠어요?' : '출고 처리하시겠어요?',
+    body: `상품 ${finalItems.length}종 · 총 ${fmtNum(totalQty)}개\n전표가 생성되고 재고에 즉시 반영됩니다.`,
+    okText: kind === 'inbound' ? '입고완료' : '출고완료',
   });
+  if (!ok) return;
 
-  // Touch swipe
-  let touchStart = null;
-  const stage = document.querySelector('.stage');
-  stage.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; });
-  stage.addEventListener('touchend', (e) => {
-    if (touchStart === null) return;
-    const dx = e.changedTouches[0].clientX - touchStart;
-    if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
-    touchStart = null;
+  const now = new Date().toISOString();
+  const voucher = {
+    id: nextVoucherId(kind),
+    date: now,
+    items: finalItems,
+  };
+
+  // Apply stock changes
+  const map = productMap();
+  for (const it of finalItems) {
+    const p = map[it.productId];
+    if (kind === 'inbound') {
+      p.stock += it.qty;
+      p.lastInbound = now;
+    } else {
+      p.stock -= it.qty;
+      if (p.stock < 0) p.stock = 0;
+      p.lastOutbound = now;
+    }
+  }
+
+  if (kind === 'inbound') state.inboundVouchers.unshift(voucher);
+  else state.outboundVouchers.unshift(voucher);
+
+  save();
+  toast(`${voucher.id} 처리 완료 (총 ${fmtNum(totalQty)}개)`, 'success');
+  navigate(kind === 'inbound' ? 'inboundList' : 'outboundList');
+}
+
+// Inventory
+function renderInventory() {
+  const view = $('#view');
+  const totalStock = state.products.reduce((s, p) => s + p.stock, 0);
+  const skuCount = state.products.length;
+  const inStockCount = state.products.filter(p => p.stock > 0).length;
+
+  view.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat"><div class="label">SKU</div><div class="value">${skuCount}</div></div>
+      <div class="stat"><div class="label">재고 보유 SKU</div><div class="value">${inStockCount}</div></div>
+      <div class="stat"><div class="label">총 재고 수량</div><div class="value accent">${fmtNum(totalStock)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>상품별 재고</h2></div>
+      <div class="card-body tight">
+        <table>
+          <thead>
+            <tr>
+              <th>상품</th>
+              <th class="num">현재 재고</th>
+              <th>최근 입고</th>
+              <th>최근 출고</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.products.map(p => {
+              const status = p.stock === 0
+                ? '<span class="badge zero">재고없음</span>'
+                : p.stock < 5
+                  ? '<span class="badge low">소진임박</span>'
+                  : '<span class="badge in">정상</span>';
+              return `
+                <tr>
+                  <td><strong>${p.name}</strong></td>
+                  <td class="num">${fmtNum(p.stock)}</td>
+                  <td class="muted">${fmtDate(p.lastInbound)}</td>
+                  <td class="muted">${fmtDate(p.lastOutbound)}</td>
+                  <td>${status}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// Voucher list
+function renderVoucherList(kind) {
+  if (detailVoucher) return renderVoucherDetail(kind);
+  const isIn = kind === 'inbound';
+  const list = isIn ? state.inboundVouchers : state.outboundVouchers;
+  const view = $('#view');
+
+  if (list.length === 0) {
+    view.innerHTML = `
+      <div class="card">
+        <div class="empty">
+          <div class="ico">${isIn ? '↓' : '↑'}</div>
+          <div class="title">아직 ${isIn ? '입고' : '출고'} 전표가 없어요</div>
+          <div class="hint">${isIn ? '입고관리' : '출고관리'} 메뉴에서 처리하면 여기 기록됩니다.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const map = productMap();
+  view.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h2>전표 목록</h2>
+        <span class="muted" style="font-size:12px">${list.length}건</span>
+      </div>
+      <div class="card-body tight">
+        <table>
+          <thead>
+            <tr>
+              <th>전표번호</th>
+              <th>일시</th>
+              <th>상품 종</th>
+              <th class="num">총 수량</th>
+              <th>구성</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(v => {
+              const totalQty = v.items.reduce((s, it) => s + it.qty, 0);
+              const preview = v.items.slice(0, 3).map(it => `${map[it.productId]?.name ?? '?'} ${it.qty}`).join(', ')
+                + (v.items.length > 3 ? ` … +${v.items.length - 3}` : '');
+              return `
+                <tr class="clickable" data-id="${v.id}">
+                  <td><span class="voucher-id">${v.id}</span></td>
+                  <td class="muted">${fmtDate(v.date)}</td>
+                  <td>${v.items.length}종</td>
+                  <td class="num"><strong>${fmtNum(totalQty)}</strong></td>
+                  <td class="muted" style="font-size:12px">${preview}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  $$('tr.clickable', view).forEach(tr => {
+    tr.addEventListener('click', () => {
+      detailVoucher = tr.dataset.id;
+      renderVoucherDetail(kind);
+    });
   });
+}
 
-  render();
+function renderVoucherDetail(kind) {
+  const isIn = kind === 'inbound';
+  const list = isIn ? state.inboundVouchers : state.outboundVouchers;
+  const v = list.find(x => x.id === detailVoucher);
+  if (!v) { detailVoucher = null; return renderVoucherList(kind); }
+  const map = productMap();
+  const totalQty = v.items.reduce((s, it) => s + it.qty, 0);
+
+  const view = $('#view');
+  view.innerHTML = `
+    <button class="crumb" id="back">← 목록으로</button>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2 style="display:flex;align-items:center;gap:10px">
+            <span class="voucher-id">${v.id}</span>
+            <span style="font-weight:500;color:var(--text-2)">${isIn ? '입고전표' : '출고전표'}</span>
+          </h2>
+          <div class="muted" style="font-size:12px;margin-top:4px">${fmtDate(v.date)}</div>
+        </div>
+        <div class="gap-md">
+          <div class="stat" style="padding:8px 14px">
+            <div class="label">상품 종수</div>
+            <div class="value" style="font-size:16px">${v.items.length}</div>
+          </div>
+          <div class="stat" style="padding:8px 14px">
+            <div class="label">총 수량</div>
+            <div class="value accent" style="font-size:16px">${fmtNum(totalQty)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tight">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>상품</th>
+              <th class="num">${isIn ? '입고' : '출고'} 수량</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${v.items.map((it, i) => `
+              <tr>
+                <td class="muted" style="width:48px">${i + 1}</td>
+                <td><strong>${map[it.productId]?.name ?? '(삭제된 상품)'}</strong></td>
+                <td class="num">${fmtNum(it.qty)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  $('#back').addEventListener('click', () => {
+    detailVoucher = null;
+    renderVoucherList(kind);
+  });
+}
+
+// ---------- Init ----------
+$$('.nav-item').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route)));
+navigate('inbound');
 </script>
 </body>
 </html>
