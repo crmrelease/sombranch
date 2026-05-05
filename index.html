@@ -633,32 +633,44 @@
   </div>
 </div>
 
-<script>
+<script type="module">
 'use strict';
 
-// ---------- Storage ----------
-const STORAGE_KEY = 'wms_state_v1';
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
+import { getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence }
+  from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
 
-function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      const s = JSON.parse(raw);
-      if (!s.counters) s.counters = { inbound: 0, outbound: 0, sku: 0 };
-      if (s.counters.sku === undefined) s.counters.sku = 0;
-      // migrate products to new shape (sku/price/photo)
-      (s.products || []).forEach(p => {
-        if (!p.sku) {
-          s.counters.sku += 1;
-          p.sku = 'SKU-' + String(s.counters.sku).padStart(4, '0');
-        }
-        if (p.price === undefined) p.price = 0;
-        if (p.photo === undefined) p.photo = null;
-      });
-      return s;
-    } catch (e) {}
-  }
-  return seed();
+// ---------- Firebase config (paste from Firebase console → 프로젝트 설정 → 내 앱 → SDK) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyAvA65VI52COYU4areSZGaV8rfeEKK6xGk",
+  authDomain: "sombranch-wms.firebaseapp.com",
+  databaseURL: "https://sombranch-wms-default-rtdb.firebaseio.com",
+  projectId: "sombranch-wms",
+  storageBucket: "sombranch-wms.firebasestorage.app",
+  messagingSenderId: "539708668216",
+  appId: "1:539708668216:web:21198385b9938b017669cd",
+  measurementId: "G-MTZ6CNX37V",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(() => {}); // offline support, ignore multi-tab error
+const stateDoc = doc(db, 'wms', 'state');
+
+// ---------- Storage ----------
+function migrate(s) {
+  if (!s.counters) s.counters = { inbound: 0, outbound: 0, sku: 0 };
+  if (s.counters.sku === undefined) s.counters.sku = 0;
+  (s.products || []).forEach(p => {
+    if (!p.sku) {
+      s.counters.sku += 1;
+      p.sku = 'SKU-' + String(s.counters.sku).padStart(4, '0');
+    }
+    if (p.price === undefined) p.price = 0;
+    if (p.photo === undefined) p.photo = null;
+  });
+  return s;
 }
 
 function seed() {
@@ -675,9 +687,31 @@ function seed() {
   };
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let state = seed(); // replaced when first snapshot arrives
+let _suppressRender = false;
+let _saving = 0;
 
-let state = loadState();
+function save() {
+  _saving++;
+  setDoc(stateDoc, state)
+    .catch(err => { console.error('Firestore save failed', err); toast('저장 실패: ' + err.code, 'error'); })
+    .finally(() => { _saving--; });
+}
+
+// Realtime sync — any device's write streams to all others
+onSnapshot(stateDoc, (snap) => {
+  if (_saving > 0) return; // ignore echoes of our own writes
+  if (!snap.exists()) {
+    // First boot ever — push seed
+    setDoc(stateDoc, state);
+    return;
+  }
+  state = migrate(snap.data());
+  rerenderCurrent();
+}, (err) => {
+  console.error('Firestore sync error', err);
+  toast('동기화 오류: ' + err.code, 'error');
+});
 
 // ---------- Helpers ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -797,6 +831,13 @@ function navigate(name) {
     <div id="view"></div>
   `;
   r.render();
+}
+
+// Re-render current view after a remote sync update.
+// Skip while user is mid-entry in an editor (avoid blowing away typed-but-not-saved input).
+function rerenderCurrent() {
+  if (currentRoute === 'inbound' || currentRoute === 'outbound') return;
+  navigate(currentRoute);
 }
 
 // ---------- Views ----------
