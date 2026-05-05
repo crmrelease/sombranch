@@ -1187,7 +1187,7 @@ function renderProducts() {
     <div class="card">
       <div class="card-head">
         <h2>상품 목록</h2>
-        <span class="muted" style="font-size:12px">${total}건</span>
+        <span class="muted" style="font-size:12px">${total}건 · 행을 클릭하면 수정</span>
       </div>
       <div class="card-body tight">
         ${total === 0 ? `
@@ -1213,7 +1213,7 @@ function renderProducts() {
                   ? `<img class="thumb thumb-lg" src="${p.photo}" alt="">`
                   : `<div class="thumb thumb-lg thumb-empty">—</div>`;
                 return `
-                  <tr>
+                  <tr class="clickable" data-pid="${p.id}">
                     <td>${thumb}</td>
                     <td><span class="voucher-id">${p.sku}</span></td>
                     <td><strong>${escapeHtml(p.name)}</strong></td>
@@ -1228,34 +1228,50 @@ function renderProducts() {
       </div>
     </div>
   `;
+
+  view.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => openProductModal(tr.dataset.pid));
+  });
 }
 
-function openProductModal() {
-  let photoData = null;
-  $('#modalTitle').textContent = '상품 추가';
+function openProductModal(editId = null) {
+  const editing = state.products.find(p => p.id === editId);
+  let photoData = editing ? (editing.photo || null) : null;
+
+  $('#modalTitle').textContent = editing ? '상품 수정' : '상품 추가';
   $('#modalBody').innerHTML = `
     <div class="form-grid">
+      ${editing ? `
+        <div>
+          <label>SKU</label>
+          <input type="text" value="${escapeHtml(editing.sku)}" readonly style="background:#f3f4f6;color:#6b7280" />
+        </div>
+      ` : ''}
       <div>
         <label>이름<span class="req">*</span></label>
-        <input id="pName" type="text" placeholder="예: 무선마우스" maxlength="60" />
+        <input id="pName" type="text" placeholder="예: 무선마우스" maxlength="60" value="${editing ? escapeHtml(editing.name) : ''}" />
       </div>
       <div>
         <label>가격<span class="req">*</span></label>
-        <input id="pPrice" type="number" min="0" step="1" placeholder="0" />
+        <input id="pPrice" type="number" min="0" step="1" placeholder="0" value="${editing ? editing.price : ''}" />
       </div>
       <div>
         <label>사진 <span class="muted" style="font-weight:400">(선택)</span></label>
         <div class="file-row">
           <input id="pPhoto" type="file" accept="image/*" />
-          <img id="pPreviewImg" class="photo-preview" style="display:none" />
-          <button type="button" id="pPhotoClear" class="photo-clear" style="display:none">제거</button>
+          <img id="pPreviewImg" class="photo-preview" style="${photoData ? '' : 'display:none'}" ${photoData ? `src="${photoData}"` : ''} />
+          <button type="button" id="pPhotoClear" class="photo-clear" style="${photoData ? '' : 'display:none'}">제거</button>
         </div>
       </div>
-      <div class="muted" style="font-size:12px">SKU 는 등록 시 자동 발급돼요.</div>
+      ${editing ? `
+        <div class="muted" style="font-size:12px">현재 재고: ${fmtNum(editing.stock)} · 입출고로 변경됩니다.</div>
+      ` : `
+        <div class="muted" style="font-size:12px">SKU 는 등록 시 자동 발급돼요.</div>
+      `}
     </div>
   `;
   const ok = $('#modalOk');
-  ok.textContent = '등록';
+  ok.textContent = editing ? '저장' : '등록';
   ok.className = 'btn btn-sm btn-primary';
   $('#modalBg').classList.add('show');
 
@@ -1270,7 +1286,7 @@ function openProductModal() {
       $('#pPhotoClear').style.display = 'inline';
     } catch (err) {
       toast(err.message, 'error');
-      photoData = null;
+      photoData = editing ? (editing.photo || null) : null;
       $('#pPhoto').value = '';
     }
   });
@@ -1293,18 +1309,28 @@ function openProductModal() {
     const price = parseInt(priceStr, 10);
     if (!name) { toast('이름을 입력해주세요', 'error'); $('#pName').focus(); return; }
     if (!priceStr || isNaN(price) || price < 0) { toast('가격은 0 이상의 숫자로 입력해주세요', 'error'); $('#pPrice').focus(); return; }
-    if (state.products.some(p => p.name === name)) { toast('같은 이름의 상품이 이미 있어요', 'error'); return; }
+    if (state.products.some(p => p.name === name && p.id !== editId)) { toast('같은 이름의 상품이 이미 있어요', 'error'); return; }
 
-    const id = 'p' + Date.now().toString(36);
-    const sku = nextSku();
-    state.products.push({
-      id, sku, name, price, photo: photoData,
-      stock: 0, lastInbound: null, lastOutbound: null,
-    });
-    save();
-    close();
-    toast(`${sku} · ${name} 등록 완료`, 'success');
-    renderProducts();
+    if (editing) {
+      editing.name = name;
+      editing.price = price;
+      editing.photo = photoData;
+      save();
+      close();
+      toast(`${editing.sku} · ${name} 수정 완료`, 'success');
+      renderProducts();
+    } else {
+      const id = 'p' + Date.now().toString(36);
+      const sku = nextSku();
+      state.products.push({
+        id, sku, name, price, photo: photoData,
+        stock: 0, lastInbound: null, lastOutbound: null,
+      });
+      save();
+      close();
+      toast(`${sku} · ${name} 등록 완료`, 'success');
+      renderProducts();
+    }
   }
   ok.addEventListener('click', onOk);
   $('#modalCancel').addEventListener('click', onCancel);
