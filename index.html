@@ -2,256 +2,294 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bunny Gallery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #f4f4f6;
     background:
-      radial-gradient(circle at 20% 20%, #4c1d95 0%, transparent 40%),
-      radial-gradient(circle at 80% 80%, #0ea5e9 0%, transparent 40%),
+      radial-gradient(circle at 20% 20%, #831843 0%, transparent 45%),
+      radial-gradient(circle at 80% 80%, #4c1d95 0%, transparent 45%),
       linear-gradient(135deg, #0f0f1e, #1a1a2e);
     background-attachment: fixed;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 40px 20px;
   }
-  .calc {
-    width: 340px;
-    background: linear-gradient(160deg, rgba(30, 30, 46, 0.95), rgba(20, 20, 35, 0.95));
-    border: 1px solid rgba(255, 255, 255, 0.08);
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #fbcfe8, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+    letter-spacing: 0.02em;
+  }
+
+  .stage {
+    position: relative;
+    width: min(820px, 100%);
+    aspect-ratio: 4 / 3;
     border-radius: 28px;
-    padding: 24px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
     box-shadow:
-      0 30px 80px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-      0 1px 0 rgba(255, 255, 255, 0.1) inset;
+      0 30px 80px -20px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.02) inset;
     backdrop-filter: blur(20px);
   }
-  .display {
-    background: linear-gradient(180deg, #0a0a14, #11111f);
-    color: #f8fafc;
-    border-radius: 18px;
-    padding: 24px 22px;
-    text-align: right;
-    margin-bottom: 20px;
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    position: relative;
+
+  .slides {
+    position: absolute;
+    inset: 0;
   }
-  .display::before {
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transform: scale(1.05);
+    transition: opacity 600ms ease, transform 800ms ease;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .slide.loading::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(168, 85, 247, 0.08), transparent 60%);
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.4) 100%);
     pointer-events: none;
   }
-  .expr {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 14px;
-    font-weight: 300;
-    color: #64748b;
-    min-height: 18px;
-    word-break: break-all;
-    letter-spacing: 0.02em;
-  }
-  .result {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 44px;
-    font-weight: 300;
-    word-break: break-all;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #f8fafc 0%, #c4b5fd 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
-    line-height: 1.1;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  button {
-    height: 64px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 18px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 22px;
-    font-weight: 500;
+
+  .nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(15,15,30,0.55);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
     cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
-    color: #e2e8f0;
-    background: linear-gradient(160deg, #2a2a3e, #1f1f2e);
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.3),
-      0 1px 0 rgba(255, 255, 255, 0.06) inset;
-    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    transition: all 200ms ease;
+    z-index: 5;
   }
-  button:hover {
-    background: linear-gradient(160deg, #353548, #252538);
-    transform: translateY(-1px);
-    box-shadow:
-      0 6px 16px rgba(0, 0, 0, 0.4),
-      0 1px 0 rgba(255, 255, 255, 0.1) inset;
+
+  .nav:hover {
+    background: rgba(139,92,246,0.45);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-50%) scale(1.08);
   }
-  button:active {
-    transform: translateY(0) scale(0.97);
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.3),
-      0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  .nav:active {
+    transform: translateY(-50%) scale(0.95);
   }
-  .op {
-    background: linear-gradient(160deg, #f59e0b, #ea580c);
-    color: #fff;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    box-shadow:
-      0 4px 14px rgba(245, 158, 11, 0.4),
-      0 1px 0 rgba(255, 255, 255, 0.2) inset;
-  }
-  .op:hover {
-    background: linear-gradient(160deg, #fbbf24, #f97316);
-    box-shadow:
-      0 6px 20px rgba(245, 158, 11, 0.55),
-      0 1px 0 rgba(255, 255, 255, 0.25) inset;
-  }
-  .util {
-    background: linear-gradient(160deg, #3f3f5c, #2d2d44);
-    color: #cbd5e1;
+
+  .nav.prev { left: 16px; }
+  .nav.next { right: 16px; }
+
+  .counter {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 13px;
     font-weight: 500;
+    color: rgba(255,255,255,0.85);
+    background: rgba(15,15,30,0.55);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 12px;
+    border-radius: 999px;
+    z-index: 5;
+    letter-spacing: 0.05em;
   }
-  .util:hover {
-    background: linear-gradient(160deg, #4a4a68, #383852);
+
+  .dots {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
   }
-  .eq {
-    background: linear-gradient(160deg, #8b5cf6, #6366f1);
-    color: #fff;
-    font-weight: 600;
-    grid-column: span 2;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    box-shadow:
-      0 4px 14px rgba(139, 92, 246, 0.5),
-      0 1px 0 rgba(255, 255, 255, 0.2) inset;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 250ms ease;
   }
-  .eq:hover {
-    background: linear-gradient(160deg, #a78bfa, #818cf8);
-    box-shadow:
-      0 6px 20px rgba(139, 92, 246, 0.65),
-      0 1px 0 rgba(255, 255, 255, 0.25) inset;
+
+  .dot.active {
+    width: 28px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ec4899, #a855f7);
   }
-  .zero { grid-column: span 2; }
+
+  .dot:hover:not(.active) {
+    background: rgba(255,255,255,0.4);
+  }
+
+  .hint {
+    margin-top: 18px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.05em;
+  }
+
+  kbd {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    color: rgba(255,255,255,0.7);
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 22px; }
+    .nav { width: 44px; height: 44px; font-size: 18px; }
+    .nav.prev { left: 10px; }
+    .nav.next { right: 10px; }
+  }
 </style>
 </head>
 <body>
-  <div class="calc">
-    <div class="display">
-      <div class="expr" id="expr"></div>
-      <div class="result" id="result">0</div>
-    </div>
-    <div class="grid">
-      <button class="util" data-act="clear">AC</button>
-      <button class="util" data-act="back">⌫</button>
-      <button class="util" data-val="%">%</button>
-      <button class="op" data-val="/">÷</button>
+  <h1>🐰 Bunny Gallery</h1>
+  <p class="subtitle">10 cute rabbits · use arrows or ← →</p>
 
-      <button data-val="7">7</button>
-      <button data-val="8">8</button>
-      <button data-val="9">9</button>
-      <button class="op" data-val="*">×</button>
-
-      <button data-val="4">4</button>
-      <button data-val="5">5</button>
-      <button data-val="6">6</button>
-      <button class="op" data-val="-">−</button>
-
-      <button data-val="1">1</button>
-      <button data-val="2">2</button>
-      <button data-val="3">3</button>
-      <button class="op" data-val="+">+</button>
-
-      <button class="zero" data-val="0">0</button>
-      <button data-val=".">.</button>
-      <button class="eq" data-act="equals">=</button>
-    </div>
+  <div class="stage" role="region" aria-label="Rabbit slideshow">
+    <div class="slides" id="slides"></div>
+    <div class="gradient-overlay"></div>
+    <div class="counter" id="counter">1 / 10</div>
+    <button class="nav prev" id="prev" aria-label="Previous">‹</button>
+    <button class="nav next" id="next" aria-label="Next">›</button>
   </div>
 
+  <div class="dots" id="dots"></div>
+  <p class="hint">click <kbd>‹</kbd> <kbd>›</kbd> or press <kbd>←</kbd> <kbd>→</kbd></p>
+
 <script>
-const exprEl = document.getElementById('expr');
-const resultEl = document.getElementById('result');
-let buffer = '';
-let lastResult = null;
+  const PHOTOS = [
+    '1585110396000-c9ffd4e4b308',
+    '1609151354448-c4a53450c6e9',
+    '1535241749838-299277b6305f',
+    '1480554840075-72cbdabbf689',
+    '1452857297128-d9c29adba80b',
+    '1589952283406-b53a7d1347e8',
+    '1581872454565-822dac9367aa',
+    '1623686070581-5d2eb8187fc2',
+    '1591561582301-7ce6588cc286',
+    '1559214369-a6b1d7919865',
+  ];
 
-function render() {
-  resultEl.textContent = buffer || (lastResult !== null ? String(lastResult) : '0');
-}
+  const slidesEl = document.getElementById('slides');
+  const dotsEl = document.getElementById('dots');
+  const counterEl = document.getElementById('counter');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
 
-function safeEval(s) {
-  if (!/^[\d+\-*/%.() ]+$/.test(s)) throw new Error('invalid');
-  return Function('"use strict"; return (' + s + ')')();
-}
+  let current = 0;
 
-function compute() {
-  if (!buffer) return;
-  try {
-    const v = safeEval(buffer);
-    if (!isFinite(v)) throw new Error('div0');
-    exprEl.textContent = buffer + ' =';
-    lastResult = Number.isInteger(v) ? v : Math.round(v * 1e10) / 1e10;
-    buffer = '';
-    render();
-  } catch (e) {
-    resultEl.textContent = 'Error';
-    buffer = '';
-    lastResult = null;
-  }
-}
+  PHOTOS.forEach((id, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide loading';
+    const url = `https://images.unsplash.com/photo-${id}?w=1200&q=80&auto=format&fit=crop`;
+    const img = new Image();
+    img.onload = () => {
+      slide.style.backgroundImage = `url('${url}')`;
+      slide.classList.remove('loading');
+    };
+    img.onerror = () => slide.classList.remove('loading');
+    img.src = url;
+    slidesEl.appendChild(slide);
 
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const v = btn.dataset.val;
-    const act = btn.dataset.act;
-    if (act === 'clear') {
-      buffer = ''; lastResult = null; exprEl.textContent = '';
-    } else if (act === 'back') {
-      buffer = buffer.slice(0, -1);
-    } else if (act === 'equals') {
-      compute();
-      return;
-    } else if (v) {
-      if (lastResult !== null && /[\d.]/.test(v)) {
-        buffer = v; lastResult = null; exprEl.textContent = '';
-      } else if (lastResult !== null && /[+\-*/%]/.test(v)) {
-        buffer = String(lastResult) + v; lastResult = null; exprEl.textContent = '';
-      } else {
-        buffer += v;
-      }
-    }
-    render();
+    const dot = document.createElement('button');
+    dot.className = 'dot';
+    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+    dot.addEventListener('click', () => go(i));
+    dotsEl.appendChild(dot);
   });
-});
 
-document.addEventListener('keydown', (e) => {
-  if (/[\d+\-*/.%]/.test(e.key)) {
-    document.querySelector(`button[data-val="${e.key}"]`)?.click();
-  } else if (e.key === 'Enter' || e.key === '=') {
-    compute();
-  } else if (e.key === 'Backspace') {
-    document.querySelector('button[data-act="back"]').click();
-  } else if (e.key === 'Escape') {
-    document.querySelector('button[data-act="clear"]').click();
+  function render() {
+    [...slidesEl.children].forEach((s, i) => s.classList.toggle('active', i === current));
+    [...dotsEl.children].forEach((d, i) => d.classList.toggle('active', i === current));
+    counterEl.textContent = `${current + 1} / ${PHOTOS.length}`;
   }
-});
+
+  function go(i) {
+    current = (i + PHOTOS.length) % PHOTOS.length;
+    render();
+  }
+
+  prevBtn.addEventListener('click', () => go(current - 1));
+  nextBtn.addEventListener('click', () => go(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(current - 1);
+    if (e.key === 'ArrowRight') go(current + 1);
+  });
+
+  // Touch swipe
+  let touchStart = null;
+  const stage = document.querySelector('.stage');
+  stage.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; });
+  stage.addEventListener('touchend', (e) => {
+    if (touchStart === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart;
+    if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
+    touchStart = null;
+  });
+
+  render();
 </script>
 </body>
 </html>
