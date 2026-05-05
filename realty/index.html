@@ -564,9 +564,14 @@ const SEOUL_GUS = [
 
 const MOLIT_KEY = '95613bb414073a034336a35ab5c8535273259e3ce3d54ab373b0013ea20a3164';
 const ENDPOINTS = {
-  trade: 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade',
-  rent:  'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent',
+  trade: 'http://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade',
+  rent:  'http://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent',
 };
+const PROXIES = [
+  url => `https://cors.eu.org/${url}`,
+  url => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
 const STORAGE_KEY = 'sombranch_realty_v1';
 const PAGE_SIZE = 50;
 
@@ -649,15 +654,28 @@ function listMonths(from, to) {
   return out;
 }
 
+async function fetchViaProxies(url) {
+  let lastErr;
+  for (const wrap of PROXIES) {
+    try {
+      const res = await fetch(wrap(url), { method: 'GET' });
+      if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+      const text = await res.text();
+      if (!text || text.length < 50) { lastErr = new Error('empty body'); continue; }
+      if (text.trim().startsWith('<') && text.includes('<response>')) return text;
+      if (text.includes('rate limit') || text.includes('Rate limit')) { lastErr = new Error('proxy rate limited'); continue; }
+      lastErr = new Error('unexpected body: ' + text.slice(0, 80));
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('all proxies failed');
+}
+
 async function fetchOne(type, lawdCd, dealYmd) {
   const url = `${ENDPOINTS[type]}?serviceKey=${encodeURIComponent(MOLIT_KEY)}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}&numOfRows=1000&pageNo=1`;
-  const proxied = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  const res = await fetch(proxied);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
+  const text = await fetchViaProxies(url);
   const xml = new DOMParser().parseFromString(text, 'text/xml');
   const rc = xml.querySelector('resultCode')?.textContent || xml.querySelector('returnReasonCode')?.textContent;
-  if (rc && rc !== '00' && rc !== '0') {
+  if (rc && rc !== '00' && rc !== '0' && rc !== '000') {
     const msg = xml.querySelector('resultMsg')?.textContent || xml.querySelector('returnAuthMsg')?.textContent || `code=${rc}`;
     throw new Error(`API: ${msg}`);
   }
