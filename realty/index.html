@@ -193,7 +193,7 @@
     border-color: var(--accent-2);
     box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.14);
   }
-  input[type="month"], input[type="number"] { width: 130px; }
+  input[type="month"], input[type="date"], input[type="number"] { width: 150px; }
   .pill-input { width: 110px; }
 
   .actionbar {
@@ -435,10 +435,13 @@
       </div>
     </div>
     <div class="filter-row">
-      <div class="filter-label">조회 거래월</div>
-      <div class="field-row">
-        <input type="month" id="ymdFrom"> <span class="field-sep">~</span> <input type="month" id="ymdTo">
-        <span class="field-sep" id="ymdSummary"></span>
+      <div class="filter-label">조회 거래일</div>
+      <div>
+        <div class="field-row">
+          <input type="date" id="ymdFrom"> <span class="field-sep">~</span> <input type="date" id="ymdTo">
+          <span class="field-sep" id="ymdSummary"></span>
+        </div>
+        <div class="field-sep" style="margin-top:6px; font-size:11.5px;">국토부 API 가 월 단위라서 해당 월 전체를 가져온 뒤 선택한 일자 범위로 필터해.</div>
       </div>
     </div>
   </section>
@@ -536,7 +539,7 @@
         <tr><td colspan="8"><div class="empty">
           <div class="big">🏢</div>
           <h3>아직 데이터가 없어</h3>
-          <p>위에서 자치구·거래월을 고른 다음 <strong>🔄 데이터 갱신</strong> 을 누르면 국토부에서 실거래 기록을 가져와.</p>
+          <p>위에서 자치구·거래일 범위를 고른 다음 <strong>🔄 데이터 갱신</strong> 을 누르면 국토부에서 실거래 기록을 가져와.</p>
         </div></td></tr>
       </tbody>
     </table>
@@ -578,7 +581,7 @@ const PROXIES = [
   url => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
 ];
-const STORAGE_KEY = 'sombranch_realty_v1';
+const STORAGE_KEY = 'sombranch_realty_v2';
 const PAGE_SIZE = 50;
 
 const state = {
@@ -640,24 +643,29 @@ function updateGuSummary() {
   $('guSummary').textContent = n === 0 ? '선택 안 됨' : n === SEOUL_GUS.length ? '서울 전체 (25개)' : `${n}개 자치구 선택됨`;
 }
 
-function defaultMonths() {
+function pad(n) { return String(n).padStart(2,'0'); }
+function defaultDays() {
   const now = new Date();
-  const to = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const to = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const fromD = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-  const from = `${fromD.getFullYear()}-${String(fromD.getMonth()+1).padStart(2,'0')}`;
+  const from = `${fromD.getFullYear()}-${pad(fromD.getMonth()+1)}-${pad(fromD.getDate())}`;
   return { from, to };
 }
-function listMonths(from, to) {
+function listMonthsFromDays(from, to) {
   const [fy, fm] = from.split('-').map(Number);
   const [ty, tm] = to.split('-').map(Number);
   const out = [];
   let y = fy, m = fm;
   while (y < ty || (y === ty && m <= tm)) {
-    out.push(`${y}${String(m).padStart(2,'0')}`);
+    out.push(`${y}${pad(m)}`);
     m++; if (m > 12) { m = 1; y++; }
     if (out.length > 36) break;
   }
   return out;
+}
+function dayKey(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return y*10000 + m*100 + d;
 }
 
 async function fetchViaProxies(url) {
@@ -730,10 +738,10 @@ function parseItem(item, type, lawdCd, dealYmd) {
 async function refresh() {
   if (state.loading) return;
   if (state.selectedGus.size === 0) return toast('자치구를 1개 이상 선택해줘', true);
-  if (!state.ymdFrom || !state.ymdTo) return toast('조회 거래월을 골라줘', true);
-  if (state.ymdFrom > state.ymdTo) return toast('거래월 범위가 거꾸로야', true);
+  if (!state.ymdFrom || !state.ymdTo) return toast('조회 거래일을 골라줘', true);
+  if (state.ymdFrom > state.ymdTo) return toast('거래일 범위가 거꾸로야', true);
 
-  const months = listMonths(state.ymdFrom, state.ymdTo);
+  const months = listMonthsFromDays(state.ymdFrom, state.ymdTo);
   const gus = [...state.selectedGus];
   const total = gus.length * months.length;
   if (total > 75) return toast(`조회 단위가 너무 많아 (${total}회). 자치구나 기간을 줄여줘.`, true);
@@ -807,6 +815,11 @@ function load() {
 function applyFilters() {
   const f = state.filters;
   let rows = state.raw;
+  if (state.ymdFrom && state.ymdTo) {
+    const lo = dayKey(state.ymdFrom);
+    const hi = dayKey(state.ymdTo);
+    rows = rows.filter(r => r.dateKey >= lo && r.dateKey <= hi);
+  }
   if (f.priceMin != null && f.priceMin !== '') {
     const min = (state.type === 'trade' ? +f.priceMin * 100_000_000 : +f.priceMin * 100_000_000);
     rows = rows.filter(r => (r.priceWon ?? 0) >= min);
@@ -929,10 +942,12 @@ function renderLastUpdated() {
 }
 
 function init() {
-  const def = defaultMonths();
+  const def = defaultDays();
   state.ymdFrom = def.from;
   state.ymdTo = def.to;
   load();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(state.ymdFrom)) state.ymdFrom = def.from;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(state.ymdTo)) state.ymdTo = def.to;
   $('ymdFrom').value = state.ymdFrom;
   $('ymdTo').value = state.ymdTo;
   renderGuChips();
@@ -951,8 +966,8 @@ function init() {
 
   $('guAllBtn').onclick = () => { SEOUL_GUS.forEach(g => state.selectedGus.add(g.code)); renderGuChips(); };
   $('guClearBtn').onclick = () => { state.selectedGus.clear(); renderGuChips(); };
-  $('ymdFrom').onchange = e => state.ymdFrom = e.target.value;
-  $('ymdTo').onchange = e => state.ymdTo = e.target.value;
+  $('ymdFrom').onchange = e => { state.ymdFrom = e.target.value; state.page = 1; applyFiltersAndRender(); };
+  $('ymdTo').onchange   = e => { state.ymdTo   = e.target.value; state.page = 1; applyFiltersAndRender(); };
   $('refreshBtn').onclick = refresh;
   $('clearCacheBtn').onclick = () => {
     if (!confirm('현재 탭의 캐시된 데이터를 모두 지워?')) return;
