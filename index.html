@@ -520,6 +520,65 @@
     font-weight: 500;
   }
 
+  .thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border-2);
+    display: block;
+    background: var(--accent-softer);
+  }
+  .thumb-empty {
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    background: var(--accent-softer);
+  }
+  .thumb-lg {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+  }
+
+  .form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .req { color: var(--danger); font-weight: 700; margin-left: 2px; }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .file-row input[type="file"] {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .photo-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--border-2);
+  }
+  .photo-clear {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    text-decoration: underline;
+  }
+
   .muted { color: var(--text-3); }
   .right { text-align: right; }
   .gap-md { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -545,6 +604,9 @@
       <div class="brand-sub">WMS</div>
     </div>
   </div>
+
+  <div class="nav-section">Catalog</div>
+  <button class="nav-item" data-route="products"><span class="ico">◇</span><span>상품관리</span></button>
 
   <div class="nav-section">Operations</div>
   <button class="nav-item" data-route="inbound"><span class="ico">↓</span><span>입고관리</span></button>
@@ -580,7 +642,21 @@ const STORAGE_KEY = 'wms_state_v1';
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { return JSON.parse(raw); } catch (e) {}
+    try {
+      const s = JSON.parse(raw);
+      if (!s.counters) s.counters = { inbound: 0, outbound: 0, sku: 0 };
+      if (s.counters.sku === undefined) s.counters.sku = 0;
+      // migrate products to new shape (sku/price/photo)
+      (s.products || []).forEach(p => {
+        if (!p.sku) {
+          s.counters.sku += 1;
+          p.sku = 'SKU-' + String(s.counters.sku).padStart(4, '0');
+        }
+        if (p.price === undefined) p.price = 0;
+        if (p.photo === undefined) p.photo = null;
+      });
+      return s;
+    } catch (e) {}
   }
   return seed();
 }
@@ -588,14 +664,14 @@ function loadState() {
 function seed() {
   return {
     products: [
-      { id: 'p1', name: '토끼인형',   stock: 0, lastInbound: null, lastOutbound: null },
-      { id: 'p2', name: '다람쥐잠옷', stock: 0, lastInbound: null, lastOutbound: null },
-      { id: 'p3', name: '아이맥',     stock: 0, lastInbound: null, lastOutbound: null },
-      { id: 'p4', name: '눈알사탕',   stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p1', sku: 'SKU-0001', name: '토끼인형',   price: 0, photo: null, stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p2', sku: 'SKU-0002', name: '다람쥐잠옷', price: 0, photo: null, stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p3', sku: 'SKU-0003', name: '아이맥',     price: 0, photo: null, stock: 0, lastInbound: null, lastOutbound: null },
+      { id: 'p4', sku: 'SKU-0004', name: '눈알사탕',   price: 0, photo: null, stock: 0, lastInbound: null, lastOutbound: null },
     ],
     inboundVouchers: [],
     outboundVouchers: [],
-    counters: { inbound: 0, outbound: 0 },
+    counters: { inbound: 0, outbound: 0, sku: 4 },
   };
 }
 
@@ -622,6 +698,43 @@ function nextVoucherId(kind) {
   const mm = String(d.getMonth()+1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${kind === 'inbound' ? 'IN' : 'OUT'}-${yy}${mm}${dd}-${seq}`;
+}
+function nextSku() {
+  state.counters.sku = (state.counters.sku || 0) + 1;
+  return 'SKU-' + String(state.counters.sku).padStart(4, '0');
+}
+function fmtPrice(n) {
+  return '₩' + Number(n || 0).toLocaleString('ko-KR');
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function readImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('이미지 파일이 아니에요'));
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 600;
+        let { width, height } = img;
+        if (width > max || height > max) {
+          const r = Math.min(max / width, max / height);
+          width = Math.round(width * r);
+          height = Math.round(height * r);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.onerror = () => reject(new Error('이미지를 읽을 수 없어요'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('파일을 읽을 수 없어요'));
+    reader.readAsDataURL(file);
+  });
 }
 
 // ---------- Toast / Modal ----------
@@ -657,13 +770,14 @@ function confirmModal({ title, body, okText = '확인', okClass = 'btn-primary' 
 
 // ---------- Router ----------
 const routes = {
+  products:     { title: '상품관리',     desc: '상품을 등록하고 카탈로그를 조회합니다. SKU 는 자동 발급돼요.', render: renderProducts },
   inbound:      { title: '입고관리',     desc: '상품을 추가하고 입고수량을 입력해 입고전표를 생성합니다.', render: renderInbound },
   outbound:     { title: '출고관리',     desc: '상품을 선택하고 출고수량을 입력해 출고전표를 생성합니다.', render: renderOutbound },
   inventory:    { title: '재고관리',     desc: '상품별 현재 재고와 최근 입출고 일자를 확인합니다.', render: renderInventory },
   inboundList:  { title: '입고전표조회', desc: '입고 전표를 클릭하면 상세 항목을 볼 수 있습니다.', render: () => renderVoucherList('inbound') },
   outboundList: { title: '출고전표조회', desc: '출고 전표를 클릭하면 상세 항목을 볼 수 있습니다.', render: () => renderVoucherList('outbound') },
 };
-let currentRoute = 'inbound';
+let currentRoute = 'products';
 let detailVoucher = null;
 
 function navigate(name) {
@@ -720,7 +834,7 @@ function renderEditor(kind) {
     div.className = 'item-row';
     div.dataset.id = id;
     const opts = state.products
-      .map(p => `<option value="${p.id}">${p.name}${kind === 'outbound' ? ` (재고 ${p.stock})` : ''}</option>`)
+      .map(p => `<option value="${p.id}">[${p.sku}] ${escapeHtml(p.name)}${kind === 'outbound' ? ` · 재고 ${p.stock}` : ''}</option>`)
       .join('');
     div.innerHTML = `
       <div>
@@ -843,7 +957,10 @@ function renderInventory() {
         <table>
           <thead>
             <tr>
+              <th style="width:64px"></th>
+              <th>SKU</th>
               <th>상품</th>
+              <th class="num">가격</th>
               <th class="num">현재 재고</th>
               <th>최근 입고</th>
               <th>최근 출고</th>
@@ -857,9 +974,15 @@ function renderInventory() {
                 : p.stock < 5
                   ? '<span class="badge low">소진임박</span>'
                   : '<span class="badge in">정상</span>';
+              const thumb = p.photo
+                ? `<img class="thumb" src="${p.photo}" alt="">`
+                : `<div class="thumb thumb-empty">—</div>`;
               return `
                 <tr>
-                  <td><strong>${p.name}</strong></td>
+                  <td>${thumb}</td>
+                  <td><span class="voucher-id">${p.sku}</span></td>
+                  <td><strong>${escapeHtml(p.name)}</strong></td>
+                  <td class="num muted">${fmtPrice(p.price)}</td>
                   <td class="num">${fmtNum(p.stock)}</td>
                   <td class="muted">${fmtDate(p.lastInbound)}</td>
                   <td class="muted">${fmtDate(p.lastOutbound)}</td>
@@ -915,7 +1038,7 @@ function renderVoucherList(kind) {
           <tbody>
             ${list.map(v => {
               const totalQty = v.items.reduce((s, it) => s + it.qty, 0);
-              const preview = v.items.slice(0, 3).map(it => `${map[it.productId]?.name ?? '?'} ${it.qty}`).join(', ')
+              const preview = v.items.slice(0, 3).map(it => `${escapeHtml(map[it.productId]?.name ?? '?')} ${it.qty}`).join(', ')
                 + (v.items.length > 3 ? ` … +${v.items.length - 3}` : '');
               return `
                 <tr class="clickable" data-id="${v.id}">
@@ -977,18 +1100,22 @@ function renderVoucherDetail(kind) {
           <thead>
             <tr>
               <th>#</th>
+              <th>SKU</th>
               <th>상품</th>
               <th class="num">${isIn ? '입고' : '출고'} 수량</th>
             </tr>
           </thead>
           <tbody>
-            ${v.items.map((it, i) => `
+            ${v.items.map((it, i) => {
+              const p = map[it.productId];
+              return `
               <tr>
                 <td class="muted" style="width:48px">${i + 1}</td>
-                <td><strong>${map[it.productId]?.name ?? '(삭제된 상품)'}</strong></td>
+                <td>${p ? `<span class="voucher-id">${p.sku}</span>` : '<span class="muted">—</span>'}</td>
+                <td><strong>${escapeHtml(p?.name ?? '(삭제된 상품)')}</strong></td>
                 <td class="num">${fmtNum(it.qty)}</td>
               </tr>
-            `).join('')}
+            `;}).join('')}
           </tbody>
         </table>
       </div>
@@ -1000,9 +1127,152 @@ function renderVoucherDetail(kind) {
   });
 }
 
+// Products
+function renderProducts() {
+  $('#pageActions').innerHTML = `<button class="btn btn-primary" id="addBtn">＋ 상품 추가</button>`;
+  $('#addBtn').addEventListener('click', openProductModal);
+
+  const view = $('#view');
+  const total = state.products.length;
+  const inStock = state.products.filter(p => p.stock > 0).length;
+  const totalValue = state.products.reduce((s, p) => s + (p.price || 0) * p.stock, 0);
+
+  view.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat"><div class="label">총 상품</div><div class="value">${total}</div></div>
+      <div class="stat"><div class="label">재고 보유</div><div class="value">${inStock}</div></div>
+      <div class="stat"><div class="label">재고 평가액</div><div class="value accent" style="font-size:18px">${fmtPrice(totalValue)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h2>상품 목록</h2>
+        <span class="muted" style="font-size:12px">${total}건</span>
+      </div>
+      <div class="card-body tight">
+        ${total === 0 ? `
+          <div class="empty">
+            <div class="ico">◇</div>
+            <div class="title">아직 등록된 상품이 없어요</div>
+            <div class="hint">우측 상단 "＋ 상품 추가" 로 등록하세요.</div>
+          </div>
+        ` : `
+          <table>
+            <thead>
+              <tr>
+                <th style="width:80px"></th>
+                <th>SKU</th>
+                <th>상품명</th>
+                <th class="num">가격</th>
+                <th class="num">재고</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.products.map(p => {
+                const thumb = p.photo
+                  ? `<img class="thumb thumb-lg" src="${p.photo}" alt="">`
+                  : `<div class="thumb thumb-lg thumb-empty">—</div>`;
+                return `
+                  <tr>
+                    <td>${thumb}</td>
+                    <td><span class="voucher-id">${p.sku}</span></td>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td class="num">${fmtPrice(p.price)}</td>
+                    <td class="num">${fmtNum(p.stock)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function openProductModal() {
+  let photoData = null;
+  $('#modalTitle').textContent = '상품 추가';
+  $('#modalBody').innerHTML = `
+    <div class="form-grid">
+      <div>
+        <label>이름<span class="req">*</span></label>
+        <input id="pName" type="text" placeholder="예: 무선마우스" maxlength="60" />
+      </div>
+      <div>
+        <label>가격<span class="req">*</span></label>
+        <input id="pPrice" type="number" min="0" step="1" placeholder="0" />
+      </div>
+      <div>
+        <label>사진 <span class="muted" style="font-weight:400">(선택)</span></label>
+        <div class="file-row">
+          <input id="pPhoto" type="file" accept="image/*" />
+          <img id="pPreviewImg" class="photo-preview" style="display:none" />
+          <button type="button" id="pPhotoClear" class="photo-clear" style="display:none">제거</button>
+        </div>
+      </div>
+      <div class="muted" style="font-size:12px">SKU 는 등록 시 자동 발급돼요.</div>
+    </div>
+  `;
+  const ok = $('#modalOk');
+  ok.textContent = '등록';
+  ok.className = 'btn btn-sm btn-primary';
+  $('#modalBg').classList.add('show');
+
+  $('#pPhoto').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      photoData = await readImage(f);
+      const img = $('#pPreviewImg');
+      img.src = photoData;
+      img.style.display = 'block';
+      $('#pPhotoClear').style.display = 'inline';
+    } catch (err) {
+      toast(err.message, 'error');
+      photoData = null;
+      $('#pPhoto').value = '';
+    }
+  });
+  $('#pPhotoClear').addEventListener('click', () => {
+    photoData = null;
+    $('#pPhoto').value = '';
+    $('#pPreviewImg').style.display = 'none';
+    $('#pPhotoClear').style.display = 'none';
+  });
+
+  function close() {
+    $('#modalBg').classList.remove('show');
+    ok.removeEventListener('click', onOk);
+    $('#modalCancel').removeEventListener('click', onCancel);
+  }
+  function onCancel() { close(); }
+  function onOk() {
+    const name = $('#pName').value.trim();
+    const priceStr = $('#pPrice').value.trim();
+    const price = parseInt(priceStr, 10);
+    if (!name) { toast('이름을 입력해주세요', 'error'); $('#pName').focus(); return; }
+    if (!priceStr || isNaN(price) || price < 0) { toast('가격은 0 이상의 숫자로 입력해주세요', 'error'); $('#pPrice').focus(); return; }
+    if (state.products.some(p => p.name === name)) { toast('같은 이름의 상품이 이미 있어요', 'error'); return; }
+
+    const id = 'p' + Date.now().toString(36);
+    const sku = nextSku();
+    state.products.push({
+      id, sku, name, price, photo: photoData,
+      stock: 0, lastInbound: null, lastOutbound: null,
+    });
+    save();
+    close();
+    toast(`${sku} · ${name} 등록 완료`, 'success');
+    renderProducts();
+  }
+  ok.addEventListener('click', onOk);
+  $('#modalCancel').addEventListener('click', onCancel);
+  setTimeout(() => $('#pName').focus(), 60);
+}
+
 // ---------- Init ----------
 $$('.nav-item').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route)));
-navigate('inbound');
+navigate('products');
 </script>
 </body>
 </html>
